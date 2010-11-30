@@ -75,6 +75,7 @@
   context.save();
 
   canvas2.addEventListener('mousedown', function (e) {
+    handleDraw(e||event);
     canvas2.addEventListener('mousemove', handleDraw, false);
   }, false);
   canvas2.addEventListener('mouseup', function (e) {
