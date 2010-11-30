@@ -80,6 +80,9 @@
   canvas2.addEventListener('mouseup', function (e) {
     canvas2.removeEventListener('mousemove', handleDraw, false);
   }, false);
+  body.addEventListener('mouseout', function (e) {
+    canvas2.removeEventListener('mousemove', handleDraw, false);
+  }, false);
 
   body.appendChild(canvas);
   body.appendChild(canvas2);
