@@ -22,16 +22,26 @@
       context2 = canvas.getContext('2d'),
       n_x = parseInt(gridH/gew, 10) + 1,
       n_y = parseInt(gridW/gew, 10) + 1,
-      handleDraw = function (e) {
-        e = e || event;
-        var x = roundTo(e.x, gew),
-            y = roundTo(e.y, gew);
+      handleDraw = function (x, y) {
+          x = roundTo(x, gew),
+          y = roundTo(y, gew);
 
-          context2.beginPath(x, y);
-          context2.fillStyle = 'rgba(6,100,195, 0.5)';
-          context2.rect(x,y, gew, gew);
-          context2.fill();
-          context2.save();
+        context2.beginPath(x, y);
+        context2.fillStyle = 'rgba(6,100,195, 0.5)';
+        context2.rect(x,y, gew, gew);
+        context2.fill();
+        context2.save();
+      },
+      handleTouchDraw = function () {
+        var x = event.changedTouches[0].clientX,
+            y = event.changedTouches[0].clientY;
+        handleDraw(x, y);
+        event.preventDefault();
+      },
+      handleMouseDraw = function (e) {
+        e = e || event;
+        handleDraw(e.x, e.y);
+        e.preventDefault();
       },
       roundTo = function (n, x) {
         var i = x/2,
@@ -74,16 +84,26 @@
   context.fill();
   context.save();
 
-  canvas2.addEventListener('mousedown', function (e) {
-    handleDraw(e||event);
-    canvas2.addEventListener('mousemove', handleDraw, false);
-  }, false);
-  canvas2.addEventListener('mouseup', function (e) {
-    canvas2.removeEventListener('mousemove', handleDraw, false);
-  }, false);
-  body.addEventListener('mouseout', function (e) {
-    canvas2.removeEventListener('mousemove', handleDraw, false);
-  }, false);
+  if ("createTouch" in document) {
+    canvas2.addEventListener('touchstart', function (e) {
+      handleTouchDraw();
+      canvas2.addEventListener('touchmove', handleTouchDraw, false);
+    }, false);
+    canvas2.addEventListener('touchend', function (e) {
+      canvas2.removeEventListener('mousemove', handleTouchDraw, false);
+    }, false);
+  } else {
+    canvas2.addEventListener('mousedown', function (e) {
+      handleMouseDraw(e||event);
+      canvas2.addEventListener('mousemove', handleMouseDraw, false);
+    }, false);
+    canvas2.addEventListener('mouseup', function (e) {
+      canvas2.removeEventListener('mousemove', handleMouseDraw, false);
+    }, false);
+    body.addEventListener('mouseout', function (e) {
+      canvas2.removeEventListener('mousemove', handleMouseDraw, false);
+    }, false);
+  }
 
   body.appendChild(canvas);
   body.appendChild(canvas2);
