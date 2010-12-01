@@ -165,24 +165,24 @@
   context.save();
 
   if (isTouchDevice) {
-    canvas2.addEventListener('touchstart', function (e) {
+    canvas2.addEventListener('touchstart', function () {
       handleTouchDraw();
       canvas2.addEventListener('touchmove', handleTouchDraw, false);
     }, false);
-    canvas2.addEventListener('touchend', function (e) {
+    canvas2.addEventListener('touchend', function () {
       canvas2.removeEventListener('mousemove', handleTouchDraw, false);
     }, false);
   } else {
-    canvas2.addEventListener('mousedown', function (e) {
+    canvas2.addEventListener('mousedown', function () {
       Brush.begin(event.x, event.y);
-      handleMouseDraw(e||event);
+      handleMouseDraw(event);
       canvas2.addEventListener('mousemove', handleMouseDraw, false);
     }, false);
-    canvas2.addEventListener('mouseup', function (e) {
+    canvas2.addEventListener('mouseup', function () {
       Brush.stop();
       canvas2.removeEventListener('mousemove', handleMouseDraw, false);
     }, false);
-    body.addEventListener('mouseout', function (e) {
+    body.addEventListener('mouseout', function () {
       canvas2.removeEventListener('mousemove', handleMouseDraw, false);
     }, false);
   }
