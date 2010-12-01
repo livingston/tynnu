@@ -29,6 +29,8 @@
         },
         draw: function (x, y) {
           Brushes[this.brush](x, y);
+
+          Brush.update();
         },
         begin: function (x, y) {
           Brushes.prevX = Brushes.X = x;
@@ -51,6 +53,17 @@
           context2.fillStyle = 'rgba(6,100,195, 0.5)';
           context2.rect(x,y, gew, gew);
           context2.fill();
+        },
+        line: function (x, y) {
+          this.X = x;
+          this.Y = y;
+          context2.beginPath();
+          context2.lineWidth = 2;
+          context2.lineJoin = 'round';
+          context2.strokeStyle = 'rgba(6,100,195, 1)';
+          context2.moveTo(this.prevX, this.prevY);
+          context2.lineTo(x, y);
+          context2.stroke();
         }
       },
       handleTouchDraw = function () {
