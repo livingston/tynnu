@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.5b
+  @version - 0.5c
   @source - https://github.com/livingston/tynnu
 */
 
@@ -21,6 +21,8 @@
       canvas2 = document.createElement('canvas'),
       context = canvas.getContext('2d'),
       context2 = canvas.getContext('2d'),
+      isTouchDevice = ("createTouch" in document),
+      deviceType = isTouchDevice? 'touch' : 'mouse',
       n_x = parseInt(gridH/gew, 10) + 1,
       n_y = parseInt(gridW/gew, 10) + 1,
       Brush = {
@@ -64,7 +66,7 @@
           context2.beginPath();
           context2.lineWidth = 2;
           context2.lineJoin = 'round';
-          context2.strokeStyle = 'rgba(6,100,195, 1)';
+          context2.strokeStyle = 'rgba(6,100,195,1)';
           context2.moveTo(Brush.prevX, Brush.prevY);
           context2.lineTo(x, y);
           context2.stroke();
@@ -87,7 +89,9 @@
             }
           }
 
-          context2.strokeStyle = "rgba(6, 100, 195, 1)";
+          context2.lineJoin = 'round';
+          context2.lineWidth = 0.5;
+          context2.strokeStyle = 'rgba(6,100,195,1)';
           context2.beginPath();
 
           point = getPoint();
@@ -151,7 +155,7 @@
   context.fill();
   context.save();
 
-  if ("createTouch" in document) {
+  if (isTouchDevice) {
     canvas2.addEventListener('touchstart', function (e) {
       handleTouchDraw();
       canvas2.addEventListener('touchmove', handleTouchDraw, false);
