@@ -43,12 +43,12 @@
           this.prevY = this.Y;
         },
         stop: function () {
-          Brushes.points = [];
+          Brush.points = [];
           context2.save();
-        }
+        },
+        points: []
       },
       Brushes = {
-        points: [],
         blocks: function (x, y) {
           x = roundTo(x, gew);
           y = roundTo(y, gew);
@@ -70,7 +70,7 @@
           context2.stroke();
         },
         curvy: function (x, y) { //based on https://gist.github.com/339070 by Matthew Taylor (rhyolight)
-          var dist = 20, point, l, p = Brush.points,
+          var dist = 10, point, l, p = Brush.points,
               moveTo = CanvasRenderingContext2D.prototype.moveTo,
               bezierCurveTo = CanvasRenderingContext2D.prototype.bezierCurveTo;
 
