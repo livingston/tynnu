@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.5
+  @version - 0.5a
 */
 
 (function (window, document) {
