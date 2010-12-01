@@ -8,7 +8,8 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.5a
+  @version - 0.5b
+  @source - https://github.com/livingston/tynnu
 */
 
 (function (window, document) {
@@ -33,12 +34,13 @@
           Brush.update();
         },
         begin: function (x, y) {
-          Brushes.prevX = Brushes.X = x;
-          Brushes.prevY = Brushes.Y = y;
+          this.X = x;
+          this.Y = y;
+          this.update();
         },
         update: function () {
-          Brushes.prevX = Brushes.X;
-          Brushes.prevY = Brushes.Y;
+          this.prevX = this.X;
+          this.prevY = this.Y;
         },
         stop: function () {
           Brushes.points = [];
@@ -57,18 +59,18 @@
           context2.fill();
         },
         line: function (x, y) {
-          this.X = x;
-          this.Y = y;
+          Brush.X = x;
+          Brush.Y = y;
           context2.beginPath();
           context2.lineWidth = 2;
           context2.lineJoin = 'round';
           context2.strokeStyle = 'rgba(6,100,195, 1)';
-          context2.moveTo(this.prevX, this.prevY);
+          context2.moveTo(Brush.prevX, Brush.prevY);
           context2.lineTo(x, y);
           context2.stroke();
         },
         curvy: function (x, y) { //based on https://gist.github.com/339070 by Matthew Taylor (rhyolight)
-          var dist = 20, point, l, p = this.points,
+          var dist = 20, point, l, p = Brush.points,
               moveTo = CanvasRenderingContext2D.prototype.moveTo,
               bezierCurveTo = CanvasRenderingContext2D.prototype.bezierCurveTo;
 
