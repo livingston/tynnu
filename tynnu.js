@@ -71,6 +71,15 @@
           context2.lineTo(x, y);
           context2.stroke();
         },
+        circles: function (x, y) {
+          Brush.X = x;
+          Brush.Y = y;
+          context2.beginPath();
+          context2.fillStyle = 'rgba(6,100,195, 0.5)';
+          context2.moveTo(Brush.prevX, Brush.prevY);
+          context2.arc(x, y, gew, 0, 359, false);
+          context2.fill();
+        },
         curvy: function (x, y) { //based on https://gist.github.com/339070 by Matthew Taylor (rhyolight)
           var dist = 10, point, l, p = Brush.points,
               moveTo = CanvasRenderingContext2D.prototype.moveTo,
