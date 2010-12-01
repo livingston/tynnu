@@ -23,7 +23,7 @@
       n_x = parseInt(gridH/gew, 10) + 1,
       n_y = parseInt(gridW/gew, 10) + 1,
       handleDraw = function (x, y) {
-          x = roundTo(x, gew),
+          x = roundTo(x, gew);
           y = roundTo(y, gew);
 
         context2.beginPath(x, y);
@@ -33,9 +33,13 @@
         context2.save();
       },
       handleTouchDraw = function () {
-        var x = event.changedTouches[0].clientX,
-            y = event.changedTouches[0].clientY;
-        handleDraw(x, y);
+        var l = event.changedTouches.length, x ,y;
+
+        while (l--) {
+          x = event.changedTouches[l].clientX;
+          y = event.changedTouches[l].clientY;
+          handleDraw(x, y);
+        }
         event.preventDefault();
       },
       handleMouseDraw = function (e) {
