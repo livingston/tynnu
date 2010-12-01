@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.4a
+  @version - 0.5
 */
 
 (function (window, document) {
@@ -22,21 +22,35 @@
       context2 = canvas.getContext('2d'),
       n_x = parseInt(gridH/gew, 10) + 1,
       n_y = parseInt(gridW/gew, 10) + 1,
-      p_x, p_y,
-      Brush = function (brush, x, y) {
-        brush = (brush in Brushes)? brush : "blocks";
-        Brushes[brush](x, y);
+      Brush = {
+        brush: "blocks",
+        set: function (brush) {
+          this.brush = (brush in Brushes)? brush : "blocks";
+        },
+        draw: function (x, y) {
+          Brushes[this.brush](x, y);
+        },
+        begin: function (x, y) {
+          Brushes.prevX = Brushes.X = x;
+          Brushes.prevY = Brushes.Y = y;
+        },
+        update: function () {
+          Brushes.prevX = Brushes.X;
+          Brushes.prevY = Brushes.Y;
+        },
+        stop: function () {
+          context2.save();
+        }
       },
       Brushes = {
         blocks: function (x, y) {
           x = roundTo(x, gew);
           y = roundTo(y, gew);
 
-          context2.beginPath(x, y);
+          context2.beginPath();
           context2.fillStyle = 'rgba(6,100,195, 0.5)';
           context2.rect(x,y, gew, gew);
           context2.fill();
-          context2.save();
         }
       },
       handleTouchDraw = function () {
@@ -45,13 +59,12 @@
         while (l--) {
           x = event.changedTouches[l].clientX;
           y = event.changedTouches[l].clientY;
-          Brush(null, x, y);
+          Brush.draw(x, y);
         }
         event.preventDefault();
       },
       handleMouseDraw = function (e) {
-        e = e || event;
-        Brush(null, e.x, e.y);
+        Brush.draw(e.x, e.y);
         e.preventDefault();
       },
       roundTo = function (n, x) {
@@ -77,7 +90,7 @@
   canvas2.style.left = '0';
   canvas2.style.zIndex = '1000001';
 
-  context.beginPath(0, 0);
+  context.beginPath();
 
   while (n_x--) {
     t = n_x * gew;
@@ -105,10 +118,12 @@
     }, false);
   } else {
     canvas2.addEventListener('mousedown', function (e) {
+      Brush.begin(event.x, event.y);
       handleMouseDraw(e||event);
       canvas2.addEventListener('mousemove', handleMouseDraw, false);
     }, false);
     canvas2.addEventListener('mouseup', function (e) {
+      Brush.stop();
       canvas2.removeEventListener('mousemove', handleMouseDraw, false);
     }, false);
     body.addEventListener('mouseout', function (e) {
@@ -118,4 +133,5 @@
 
   body.appendChild(canvas);
   body.appendChild(canvas2);
+  window.B = Brush;
 }(window, document));
