@@ -41,10 +41,12 @@
           Brushes.prevY = Brushes.Y;
         },
         stop: function () {
+          Brushes.points = [];
           context2.save();
         }
       },
       Brushes = {
+        points: [],
         blocks: function (x, y) {
           x = roundTo(x, gew);
           y = roundTo(y, gew);
@@ -63,6 +65,32 @@
           context2.strokeStyle = 'rgba(6,100,195, 1)';
           context2.moveTo(this.prevX, this.prevY);
           context2.lineTo(x, y);
+          context2.stroke();
+        },
+        curvy: function (x, y) { //based on https://gist.github.com/339070 by Matthew Taylor (rhyolight)
+          var dist = 20, point, l, p = this.points,
+              moveTo = CanvasRenderingContext2D.prototype.moveTo,
+              bezierCurveTo = CanvasRenderingContext2D.prototype.bezierCurveTo;
+
+          context2.beginPath();
+          p.push([x,y]);
+          l = p.length;
+
+          function getPoint(xAgo) {
+            var i = l - dist;
+            for (;++i < l;) {
+                if (p[i]) {
+                    return p[i];
+                }
+            }
+          }
+
+          context2.strokeStyle = "rgba(6, 100, 195, 1)";
+          context2.beginPath();
+
+          point = getPoint();
+          moveTo.apply(context2, point);
+          context2.bezierCurveTo(point[0], point[1], point[0], point[1], x, y);
           context2.stroke();
         }
       },
