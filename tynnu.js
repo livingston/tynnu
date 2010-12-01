@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.3
+  @version - 0.4a
 */
 
 (function (window, document) {
@@ -22,15 +22,22 @@
       context2 = canvas.getContext('2d'),
       n_x = parseInt(gridH/gew, 10) + 1,
       n_y = parseInt(gridW/gew, 10) + 1,
-      handleDraw = function (x, y) {
+      p_x, p_y,
+      Brush = function (brush, x, y) {
+        brush = (brush in Brushes)? brush : "blocks";
+        Brushes[brush](x, y);
+      },
+      Brushes = {
+        blocks: function (x, y) {
           x = roundTo(x, gew);
           y = roundTo(y, gew);
 
-        context2.beginPath(x, y);
-        context2.fillStyle = 'rgba(6,100,195, 0.5)';
-        context2.rect(x,y, gew, gew);
-        context2.fill();
-        context2.save();
+          context2.beginPath(x, y);
+          context2.fillStyle = 'rgba(6,100,195, 0.5)';
+          context2.rect(x,y, gew, gew);
+          context2.fill();
+          context2.save();
+        }
       },
       handleTouchDraw = function () {
         var l = event.changedTouches.length, x ,y;
@@ -38,13 +45,13 @@
         while (l--) {
           x = event.changedTouches[l].clientX;
           y = event.changedTouches[l].clientY;
-          handleDraw(x, y);
+          Brush(null, x, y);
         }
         event.preventDefault();
       },
       handleMouseDraw = function (e) {
         e = e || event;
-        handleDraw(e.x, e.y);
+        Brush(null, e.x, e.y);
         e.preventDefault();
       },
       roundTo = function (n, x) {
