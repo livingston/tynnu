@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.6
+  @version - 0.6a
   @source - https://github.com/livingston/tynnu
 */
 
@@ -139,7 +139,6 @@
       };
 
       Grid.prototype.get = function (w) {
-        console.log(this[w], w, this.w)
         return this[w] || null;
       };
 
@@ -183,6 +182,37 @@
           t = n_y * gew;
           ctx.moveTo(t, 0);
           ctx.lineTo(t, grid.get('h'));
+        }
+
+        ctx.stroke();
+        ctx.fill();
+      });
+
+      Grid.addType('dotted', function (ctx, grid) {
+        var n, s = 2,
+            getStep = function () {
+              return n = n + s
+            };
+
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.lineWidth = 0.3;
+
+        while (n_x--) {
+          n = 0;
+          t = n_x * gew;
+          while (n <= grid.get('w')) {
+            ctx.moveTo(getStep(), t);
+            ctx.lineTo(getStep(), t);
+          }
+        }
+
+        while (n_y--) {
+          n = 0;
+          t = n_y * gew;
+          while (n <= grid.get('h')) {
+            ctx.moveTo(t, getStep());
+            ctx.lineTo(t, getStep());
+          }
         }
 
         ctx.stroke();
