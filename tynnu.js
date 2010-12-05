@@ -128,7 +128,65 @@
             j = n%x,
             k = j>i? (x-j):(j*-1);
         return (n + k)
-      }, t;
+      }, t,
+      Grid = function (ctx, type, w, h) {
+        this.context = ctx;
+        this.h = h || document.body.clientHeight;
+        this.w = w || document.body.clientWidth;
+        console.log(this.w)
+        this.set(type);
+        this.draw();
+      };
+
+      Grid.prototype.get = function (w) {
+        console.log(this[w], w, this.w)
+        return this[w] || null;
+      };
+
+      Grid.prototype.clear = function () {
+        this.context.clearRect(0, 0, gridW, gridH);
+      };
+
+      Grid.prototype.set = function (type) {
+        this.type = (type || 'lines');
+      };
+
+      Grid.prototype.draw = function () {
+        var ctx = this.context,
+            orig_strokeStyle = ctx.strokeStyle,
+            orig_lineWidth = ctx.lineWidth;
+        ctx.beginPath();
+
+        Grid.types[this.type](ctx, this);
+
+        ctx.save();
+        ctx.strokeStyle = orig_strokeStyle;
+        ctx.lineWidth = orig_lineWidth;
+      };
+
+      Grid.types = {
+        lines: function (ctx, grid) {
+          console.log(ctx, this.grid);
+
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+          ctx.lineWidth = 0.3;
+
+          while (n_x--) {
+            t = n_x * gew;
+            ctx.moveTo(0, t);
+            ctx.lineTo(grid.get('w'), t);
+          }
+
+          while (n_y--) {
+            t = n_y * gew;
+            ctx.moveTo(t, 0);
+            ctx.lineTo(t, grid.get('h'));
+          }
+
+          ctx.stroke();
+          ctx.fill();
+        }
+      };
 
   canvas.width = gridW;
   canvas.height = gridH;
@@ -136,8 +194,6 @@
   canvas.style.top = '0';
   canvas.style.left = '0';
   canvas.style.zIndex = '1000000';
-  context.lineWidth = 0.3;
-  context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
 
   canvas2.width = gridW;
   canvas2.height = gridH;
@@ -145,24 +201,6 @@
   canvas2.style.top = '0';
   canvas2.style.left = '0';
   canvas2.style.zIndex = '1000001';
-
-  context.beginPath();
-
-  while (n_x--) {
-    t = n_x * gew;
-    context.moveTo(0, t);
-    context.lineTo(gridW, t);
-  }
-
-  while (n_y--) {
-    t = n_y * gew;
-    context.moveTo(t, 0);
-    context.lineTo(t, gridH);
-  }
-
-  context.stroke();
-  context.fill();
-  context.save();
 
   if (isTouchDevice) {
     canvas2.addEventListener('touchstart', function () {
@@ -190,4 +228,6 @@
   body.appendChild(canvas);
   body.appendChild(canvas2);
   window.B = Brush;
+
+  var grid = new Grid(context);
 }(window, document));
