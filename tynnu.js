@@ -164,29 +164,30 @@
         ctx.lineWidth = orig_lineWidth;
       };
 
-      Grid.types = {
-        lines: function (ctx, grid) {
-          console.log(ctx, this.grid);
-
-          ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-          ctx.lineWidth = 0.3;
-
-          while (n_x--) {
-            t = n_x * gew;
-            ctx.moveTo(0, t);
-            ctx.lineTo(grid.get('w'), t);
-          }
-
-          while (n_y--) {
-            t = n_y * gew;
-            ctx.moveTo(t, 0);
-            ctx.lineTo(t, grid.get('h'));
-          }
-
-          ctx.stroke();
-          ctx.fill();
-        }
+      Grid.types = {};
+      Grid.addType = function (name, fn) {
+        Grid.types[name] = fn;
       };
+
+      Grid.addType('lines', function (ctx, grid) {
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.lineWidth = 0.3;
+
+        while (n_x--) {
+          t = n_x * gew;
+          ctx.moveTo(0, t);
+          ctx.lineTo(grid.get('w'), t);
+        }
+
+        while (n_y--) {
+          t = n_y * gew;
+          ctx.moveTo(t, 0);
+          ctx.lineTo(t, grid.get('h'));
+        }
+
+        ctx.stroke();
+        ctx.fill();
+      });
 
   canvas.width = gridW;
   canvas.height = gridH;
