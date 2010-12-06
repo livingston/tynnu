@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.6a
+  @version - 0.6b
   @source - https://github.com/livingston/tynnu
 */
 
@@ -129,17 +129,23 @@
             k = j>i? (x-j):(j*-1);
         return (n + k)
       }, t,
-      Grid = function (ctx, type, w, h) {
+      Grid = function (ctx, type, w, h, options) {
         this.context = ctx;
         this.h = h || document.body.clientHeight;
         this.w = w || document.body.clientWidth;
-        console.log(this.w)
+
         this.set(type);
-        this.draw();
+        this.draw(options);
       };
 
       Grid.prototype.get = function (w) {
         return this[w] || null;
+      };
+
+      Grid.prototype.update = function (type, options) {
+        this.clear();
+        this.set(type);
+        this.draw(options);
       };
 
       Grid.prototype.clear = function () {
@@ -150,13 +156,13 @@
         this.type = (type || 'lines');
       };
 
-      Grid.prototype.draw = function () {
+      Grid.prototype.draw = function (options) {
         var ctx = this.context,
             orig_strokeStyle = ctx.strokeStyle,
             orig_lineWidth = ctx.lineWidth;
         ctx.beginPath();
 
-        Grid.types[this.type](ctx, this);
+        Grid.types[this.type](ctx, this, options);
 
         ctx.save();
         ctx.strokeStyle = orig_strokeStyle;
@@ -188,11 +194,19 @@
         ctx.fill();
       });
 
-      Grid.addType('dotted', function (ctx, grid) {
+      Grid.addType('dotted', function (ctx, grid, options) {
         var n, s = 2,
-            getStep = function () {
-              return n = n + s
-            };
+            getStep = (function () {
+              if (options && options.rand) {
+                return function () {
+                  return n = n + (s * Math.random())
+                }
+              } else {
+                return function () {
+                  return n = n + s
+                }
+              }
+            }());
 
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
         ctx.lineWidth = 0.3;
@@ -260,5 +274,6 @@
   body.appendChild(canvas2);
   window.B = Brush;
 
-  var grid = new Grid(context);
+  var grid = new Grid(context, 'dotted', null, null, {rand:true});
+  window.g = grid;
 }(window, document));
