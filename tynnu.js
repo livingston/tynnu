@@ -8,29 +8,41 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.7
+  @version - 0.8
   @source - https://github.com/livingston/tynnu
 */
 
 (function (window, document) {
-  var body = document.body,
-      gridH = body.clientHeight,
-      gridW = body.clientWidth,
-      gew = 10,
-      canvas = document.createElement('canvas'),
-      context = canvas.getContext('2d'),
-      isTouchDevice = ("createTouch" in document),
+  var isTouchDevice = ("createTouch" in document),
       deviceType = isTouchDevice? 'touch' : 'mouse',
-      n_x = parseInt(gridH/gew, 10) + 1,
-      n_y = parseInt(gridW/gew, 10) + 1,
+      Helper = {
+        roundTo: function (n, x) {
+          var i = x/2,
+              j = n%x,
+              k = j>i? (x-j):(j*-1);
+          return (n + k)
+        },
+        extend: function (what, wit) {
+          var ext = {}, name;
+
+          for (name in wit) {
+            ext[name] = wit[name];
+          }
+          for (name in what) {
+            ext[name] = ext[name]? ext[name] : what[name];
+          }
+
+          return ext;
+        }
+      },
       Brush = {
         brush: "blocks",
         set: function (brush, ctx) {
           this.brush = (brush in Brushes)? brush : "blocks";
           this.ctx = ctx;
         },
-        draw: function (x, y) {
-          Brushes[this.brush](x, y);
+        draw: function (x, y, options) {
+          Brushes[this.brush](x, y, options);
 
           Brush.update();
         },
@@ -50,13 +62,14 @@
         points: []
       },
       Brushes = {
-        blocks: function (x, y) {
-          x = roundTo(x, gew);
-          y = roundTo(y, gew);
+        blocks: function (x, y, options) {
+          var size = (options && options.size) || 10;
+          x = Helper.roundTo(x, size);
+          y = Helper.roundTo(y, size);
 
           Brush.ctx.beginPath();
           Brush.ctx.fillStyle = 'rgba(6,100,195, 0.5)';
-          Brush.ctx.rect(x,y, gew, gew);
+          Brush.ctx.rect(x,y, size, size);
           Brush.ctx.fill();
         },
         line: function (x, y) {
@@ -108,150 +121,182 @@
           Brush.ctx.stroke();
         }
       },
-      roundTo = function (n, x) {
-        var i = x/2,
-            j = n%x,
-            k = j>i? (x-j):(j*-1);
-        return (n + k)
-      }, t,
-      Grid = function (ctx, type, w, h, options) {
-        this.context = ctx;
-        this.h = h || document.body.clientHeight;
-        this.w = w || document.body.clientWidth;
+      Grid = function (options) {
+        var defaults = {
+          type: 'lines',
+          size: 10,
+          root: document.body
+        };
 
-        this.set(type);
-        this.draw(options);
+        options = Helper.extend(defaults, options);
+
+        options.h = options.root.clientHeight;
+        options.w = options.root.clientWidth;
+        options.nx = parseInt(options.h/options.size, 10) + 1;
+        options.ny = parseInt(options.w/options.size, 10) + 1;
+
+        this.options = options;
+
+        this.setCanvas();
+        this.draw();
       };
 
-      Grid.prototype.get = function (w) {
-        return this[w] || null;
-      };
+  Grid.prototype.setCanvas = function () {
+    var canvas = document.createElement('canvas'),
+        _OPT = this.options;
 
-      Grid.prototype.update = function (type, options) {
-        this.clear();
-        this.set(type);
-        this.draw(options);
-      };
+    canvas.width = _OPT.w;
+    canvas.height = _OPT.h;
+    canvas.style.position = 'absolute';
+    canvas.style.top = 0;
+    canvas.style.left = 0;
+    canvas.style.zIndex = 10000;
 
-      Grid.prototype.clear = function () {
-        this.context.clearRect(0, 0, gridW, gridH);
-      };
+    _OPT.root.appendChild(canvas);
 
-      Grid.prototype.set = function (type) {
-        this.type = (type || 'lines');
-      };
+    this.options.context = canvas.getContext('2d');
+  };
 
-      Grid.prototype.draw = function (options) {
-        var ctx = this.context,
-            orig_strokeStyle = ctx.strokeStyle,
-            orig_lineWidth = ctx.lineWidth;
-        ctx.beginPath();
+  Grid.prototype.get = function (w) {
+    return this.options[w] || null;
+  };
 
-        Grid.types[this.type](ctx, this, options);
+  Grid.prototype.update = function (options) {
+    this.clear();
+    this.options = Helper.extend(this.options, options);
+    this.draw();
+  };
 
-        ctx.save();
-        ctx.strokeStyle = orig_strokeStyle;
-        ctx.lineWidth = orig_lineWidth;
-      };
+  Grid.prototype.clear = function () {
+    var _OPT = this.options;
+    _OPT.context.clearRect(0, 0, _OPT.w, _OPT.h);
+  };
 
-      Grid.types = {};
-      Grid.addType = function (name, fn) {
-        Grid.types[name] = fn;
-      };
+  Grid.prototype.set = function (type) {
+    this.options.type = (type || 'lines');
+  };
 
-      Grid.addType('lines', function (ctx, grid) {
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.lineWidth = 0.3;
+  Grid.prototype.draw = function (options) {
+    var _OPT = this.options,
+        ctx = _OPT.context,
+        orig_strokeStyle = ctx.strokeStyle,
+        orig_lineWidth = ctx.lineWidth;
+    ctx.beginPath();
 
-        while (n_x--) {
-          t = n_x * gew;
-          ctx.moveTo(0, t);
-          ctx.lineTo(grid.get('w'), t);
-        }
+    Grid.types[_OPT.type](ctx, this, _OPT);
 
-        while (n_y--) {
-          t = n_y * gew;
-          ctx.moveTo(t, 0);
-          ctx.lineTo(t, grid.get('h'));
-        }
+    ctx.save();
+    ctx.strokeStyle = orig_strokeStyle;
+    ctx.lineWidth = orig_lineWidth;
+  };
 
-        ctx.stroke();
-        ctx.fill();
-      });
+  Grid.types = {};
+  Grid.addType = function (name, fn) {
+    Grid.types[name] = fn;
+  };
 
-      Grid.addType('dotted', function (ctx, grid, options) {
-        var n, s = 2,
-            getStep = (function () {
-              if (options && options.rand) {
-                return function () {
-                  return n = n + (s * Math.random())
-                }
-              } else {
-                return function () {
-                  return n = n + s
-                }
-              }
-            }());
+  Grid.addType('lines', function (ctx, grid) {
+    var size = grid.get('size'),
+        w = grid.get('w'),
+        h = grid.get('h'),
+        nx = grid.get('nx'),
+        ny = grid.get('ny'), t;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.lineWidth = 0.3;
 
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.lineWidth = 0.3;
+    while (nx--) {
+      t = nx * size;
+      ctx.moveTo(0, t);
+      ctx.lineTo(w, t);
+    }
 
-        while (n_x--) {
-          n = 0;
-          t = n_x * gew;
-          while (n <= grid.get('w')) {
-            ctx.moveTo(getStep(), t);
-            ctx.lineTo(getStep(), t);
+    while (ny--) {
+      t = ny * size;
+      ctx.moveTo(t, 0);
+      ctx.lineTo(t, h);
+    }
+
+    ctx.stroke();
+  });
+
+  Grid.addType('dotted', function (ctx, grid, options) {
+    var n, s = 2, t,
+        size = grid.get('size'),
+        w = grid.get('w'),
+        h = grid.get('h'),
+        nx = grid.get('nx'),
+        ny = grid.get('ny'),
+        getStep = (function () {
+          if (options.rand) {
+            return function () {
+              return n = n + (s * Math.random())
+            }
+          } else {
+            return function () {
+              return n = n + s
+            }
           }
-        }
+        }());
 
-        while (n_y--) {
-          n = 0;
-          t = n_y * gew;
-          while (n <= grid.get('h')) {
-            ctx.moveTo(t, getStep());
-            ctx.lineTo(t, getStep());
-          }
-        }
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.lineWidth = 0.3;
 
-        ctx.stroke();
-        ctx.fill();
-      });
+    while (nx--) {
+      n = 0;
+      t = nx * size;
+      while (n <= w) {
+        ctx.moveTo(getStep(), t);
+        ctx.lineTo(getStep(), t);
+      }
+    }
 
-  canvas.width = gridW;
-  canvas.height = gridH;
-  canvas.style.position = 'absolute';
-  canvas.style.top = '0';
-  canvas.style.left = '0';
-  canvas.style.zIndex = '1000000';
+    while (ny--) {
+      n = 0;
+      t = ny * size;
+      while (n <= h) {
+        ctx.moveTo(t, getStep());
+        ctx.lineTo(t, getStep());
+      }
+    }
 
-  body.appendChild(canvas);
-  window.B = Brush;
+    ctx.stroke();
+    ctx.fill();
+  });
 
   var Tynnu = function (root, options) {
+    var defaults = {
+      size: 10
+    };
+
     this.root = root = (root && root.nodeType == 1) ? root : document.body;
     if ( root.hasAttribute('hasTynnu') ) { throw new Error('Tynnu is already defined under this root element'); }
 
     root.setAttribute('hasTynnu', true);
     this.id = 'TYNNU_' + (+new Date());
 
+    this.options = Helper.extend(defaults, options);
+
     this.setup();
   };
 
   Tynnu.prototype.setup = function () {
     var canvas = this.canvas = document.createElement('canvas'),
-        root = this.root;
+        root = this.root,
+        _OPT = this.options;
 
+    root.style.position = 'relative';
     canvas.width = this.width = root.clientWidth;
     canvas.height = this.height = root.clientHeight;
     canvas.id = this.id;
     canvas.style.left = 0;
     canvas.style.top = 0;
     canvas.style.position = 'absolute';
-    canvas.style.zIndex = '1000010';
+    canvas.style.zIndex = '10010';
 
     this.root.tynnu = this.canvas.tynnu = this;
     this.ctx = canvas.getContext('2d');
+
+    this.grid = new Grid({ root: root, type: 'dotted', rand: true, size: _OPT.size });
 
     this.root.appendChild(canvas);
     Brush.set('line', this.ctx);
@@ -259,7 +304,7 @@
   };
 
   Tynnu.prototype.draw = function (x, y) {
-    Brush.draw(x, y);
+    Brush.draw(x, y, this.options);
   };
 
   Tynnu.prototype.handleDraw = (function () {
@@ -273,6 +318,7 @@
           y = event.changedTouches[l].clientY;
           _TYNNU.draw(x, y);
         }
+        _TYNNU = null;
         event.preventDefault();
       }
     } else {
@@ -285,7 +331,7 @@
 
   Tynnu.prototype.bindPaint = function () {
     var _TYNNU = this.tynnu;
-    console.log('BIND::PAINT ', event.target, event.type, _TYNNU);
+
     Brush.begin(event.x, event.y);
     _TYNNU.handleDraw(event);
     _TYNNU.canvas.addEventListener('mousemove', _TYNNU.handleDraw, false);
@@ -293,14 +339,14 @@
 
   Tynnu.prototype.unbindPaint = function () {
     var _TYNNU = this.tynnu;
-    console.log('UNBIND::PAINT', event.target, event.type, _TYNNU, _TYNNU.canvas);
+
     Brush.stop();
     _TYNNU.canvas.removeEventListener('mousemove', _TYNNU.handleDraw, false);
   };
 
   Tynnu.prototype.bind = function () {
     var _TYNNU = this, canvas = _TYNNU.canvas;
-  console.log('BIND ', this, this.canvas);
+
     canvas.addEventListener('mousedown', _TYNNU.bindPaint, false);
     canvas.addEventListener('mouseup', _TYNNU.unbindPaint, false);
     _TYNNU.root.addEventListener('mouseout', _TYNNU.unbindPaint, false);
@@ -318,7 +364,7 @@
   Tynnu.prototype.destroy = function () {
     var NULL = null, root = this.root;
     this.unbind();
-    this.root.tynnu = NULL;
+    root.tynnu = this.canvas.tynnu = NULL;
     root.removeChild(this.canvas);
     root.removeAttribue('hasTynnu');
     this.root = root = NULL;
@@ -326,7 +372,4 @@
   };
 
   this.t = new Tynnu(document.body);
-
-  var grid = new Grid(context, 'dotted', null, null, {rand:true});
-  window.g = grid;
 }(window, document));
