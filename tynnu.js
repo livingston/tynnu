@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.6b
+  @version - 0.7
   @source - https://github.com/livingston/tynnu
 */
 
@@ -18,17 +18,16 @@
       gridW = body.clientWidth,
       gew = 10,
       canvas = document.createElement('canvas'),
-      canvas2 = document.createElement('canvas'),
       context = canvas.getContext('2d'),
-      context2 = canvas.getContext('2d'),
       isTouchDevice = ("createTouch" in document),
       deviceType = isTouchDevice? 'touch' : 'mouse',
       n_x = parseInt(gridH/gew, 10) + 1,
       n_y = parseInt(gridW/gew, 10) + 1,
       Brush = {
         brush: "blocks",
-        set: function (brush) {
+        set: function (brush, ctx) {
           this.brush = (brush in Brushes)? brush : "blocks";
+          this.ctx = ctx;
         },
         draw: function (x, y) {
           Brushes[this.brush](x, y);
@@ -46,7 +45,7 @@
         },
         stop: function () {
           Brush.points = [];
-          context2.save();
+          this.ctx.save();
         },
         points: []
       },
@@ -55,37 +54,37 @@
           x = roundTo(x, gew);
           y = roundTo(y, gew);
 
-          context2.beginPath();
-          context2.fillStyle = 'rgba(6,100,195, 0.5)';
-          context2.rect(x,y, gew, gew);
-          context2.fill();
+          Brush.ctx.beginPath();
+          Brush.ctx.fillStyle = 'rgba(6,100,195, 0.5)';
+          Brush.ctx.rect(x,y, gew, gew);
+          Brush.ctx.fill();
         },
         line: function (x, y) {
           Brush.X = x;
           Brush.Y = y;
-          context2.beginPath();
-          context2.lineWidth = 2;
-          context2.lineJoin = 'round';
-          context2.strokeStyle = 'rgba(6,100,195,1)';
-          context2.moveTo(Brush.prevX, Brush.prevY);
-          context2.lineTo(x, y);
-          context2.stroke();
+          Brush.ctx.beginPath();
+          Brush.ctx.lineWidth = 2;
+          Brush.ctx.lineJoin = 'round';
+          Brush.ctx.strokeStyle = 'rgba(6,100,195,1)';
+          Brush.ctx.moveTo(Brush.prevX, Brush.prevY);
+          Brush.ctx.lineTo(x, y);
+          Brush.ctx.stroke();
         },
         circles: function (x, y) {
           Brush.X = x;
           Brush.Y = y;
-          context2.beginPath();
-          context2.fillStyle = 'rgba(6,100,195, 0.5)';
-          context2.moveTo(Brush.prevX, Brush.prevY);
-          context2.arc(x, y, gew, 0, 359, false);
-          context2.fill();
+          Brush.ctx.beginPath();
+          Brush.ctx.fillStyle = 'rgba(6,100,195, 0.5)';
+          Brush.ctx.moveTo(Brush.prevX, Brush.prevY);
+          Brush.ctx.arc(x, y, gew, 0, 359, false);
+          Brush.ctx.fill();
         },
         curvy: function (x, y) { //based on https://gist.github.com/339070 by Matthew Taylor (rhyolight)
           var dist = 10, point, l, p = Brush.points,
-              moveTo = CanvasRenderingContext2D.prototype.moveTo,
-              bezierCurveTo = CanvasRenderingContext2D.prototype.bezierCurveTo;
+              moveTo = CanvasRenderingBrush.ctxD.prototype.moveTo,
+              bezierCurveTo = CanvasRenderingBrush.ctxD.prototype.bezierCurveTo;
 
-          context2.beginPath();
+          Brush.ctx.beginPath();
           p.push([x,y]);
           l = p.length;
 
@@ -98,30 +97,16 @@
             }
           }
 
-          context2.lineJoin = 'round';
-          context2.lineWidth = 0.5;
-          context2.strokeStyle = 'rgba(6,100,195,1)';
-          context2.beginPath();
+          Brush.ctx.lineJoin = 'round';
+          Brush.ctx.lineWidth = 0.5;
+          Brush.ctx.strokeStyle = 'rgba(6,100,195,1)';
+          Brush.ctx.beginPath();
 
           point = getPoint();
-          moveTo.apply(context2, point);
-          context2.bezierCurveTo(point[0], point[1], point[0], point[1], x, y);
-          context2.stroke();
+          moveTo.apply(Brush.ctx, point);
+          Brush.ctx.bezierCurveTo(point[0], point[1], point[0], point[1], x, y);
+          Brush.ctx.stroke();
         }
-      },
-      handleTouchDraw = function () {
-        var l = event.changedTouches.length, x ,y;
-
-        while (l--) {
-          x = event.changedTouches[l].clientX;
-          y = event.changedTouches[l].clientY;
-          Brush.draw(x, y);
-        }
-        event.preventDefault();
-      },
-      handleMouseDraw = function (e) {
-        Brush.draw(e.x, e.y);
-        e.preventDefault();
       },
       roundTo = function (n, x) {
         var i = x/2,
@@ -240,39 +225,107 @@
   canvas.style.left = '0';
   canvas.style.zIndex = '1000000';
 
-  canvas2.width = gridW;
-  canvas2.height = gridH;
-  canvas2.style.position = 'absolute';
-  canvas2.style.top = '0';
-  canvas2.style.left = '0';
-  canvas2.style.zIndex = '1000001';
-
-  if (isTouchDevice) {
-    canvas2.addEventListener('touchstart', function () {
-      handleTouchDraw();
-      canvas2.addEventListener('touchmove', handleTouchDraw, false);
-    }, false);
-    canvas2.addEventListener('touchend', function () {
-      canvas2.removeEventListener('mousemove', handleTouchDraw, false);
-    }, false);
-  } else {
-    canvas2.addEventListener('mousedown', function () {
-      Brush.begin(event.x, event.y);
-      handleMouseDraw(event);
-      canvas2.addEventListener('mousemove', handleMouseDraw, false);
-    }, false);
-    canvas2.addEventListener('mouseup', function () {
-      Brush.stop();
-      canvas2.removeEventListener('mousemove', handleMouseDraw, false);
-    }, false);
-    body.addEventListener('mouseout', function () {
-      canvas2.removeEventListener('mousemove', handleMouseDraw, false);
-    }, false);
-  }
-
   body.appendChild(canvas);
-  body.appendChild(canvas2);
   window.B = Brush;
+
+  var Tynnu = function (root, options) {
+    this.root = root = (root && root.nodeType == 1) ? root : document.body;
+    if ( root.hasAttribute('hasTynnu') ) { throw new Error('Tynnu is already defined under this root element'); }
+
+    root.setAttribute('hasTynnu', true);
+    this.id = 'TYNNU_' + (+new Date());
+
+    this.setup();
+  };
+
+  Tynnu.prototype.setup = function () {
+    var canvas = this.canvas = document.createElement('canvas'),
+        root = this.root;
+
+    canvas.width = this.width = root.clientWidth;
+    canvas.height = this.height = root.clientHeight;
+    canvas.id = this.id;
+    canvas.style.left = 0;
+    canvas.style.top = 0;
+    canvas.style.position = 'absolute';
+    canvas.style.zIndex = '1000010';
+
+    this.root.tynnu = this.canvas.tynnu = this;
+    this.ctx = canvas.getContext('2d');
+
+    this.root.appendChild(canvas);
+    Brush.set('line', this.ctx);
+    this.bind();
+  };
+
+  Tynnu.prototype.draw = function (x, y) {
+    Brush.draw(x, y);
+  };
+
+  Tynnu.prototype.handleDraw = (function () {
+    if (isTouchDevice) {
+      return function () {
+        var l = event.changedTouches.length, x ,y,
+            _TYNNU = event.target.tynnu;
+
+        while (l--) {
+          x = event.changedTouches[l].clientX;
+          y = event.changedTouches[l].clientY;
+          _TYNNU.draw(x, y);
+        }
+        event.preventDefault();
+      }
+    } else {
+      return function (e) {
+        e.target.tynnu.draw(e.x, e.y);
+        e.preventDefault();
+      }
+    }
+  }());
+
+  Tynnu.prototype.bindPaint = function () {
+    var _TYNNU = this.tynnu;
+    console.log('BIND::PAINT ', event.target, event.type, _TYNNU);
+    Brush.begin(event.x, event.y);
+    _TYNNU.handleDraw(event);
+    _TYNNU.canvas.addEventListener('mousemove', _TYNNU.handleDraw, false);
+  };
+
+  Tynnu.prototype.unbindPaint = function () {
+    var _TYNNU = this.tynnu;
+    console.log('UNBIND::PAINT', event.target, event.type, _TYNNU, _TYNNU.canvas);
+    Brush.stop();
+    _TYNNU.canvas.removeEventListener('mousemove', _TYNNU.handleDraw, false);
+  };
+
+  Tynnu.prototype.bind = function () {
+    var _TYNNU = this, canvas = _TYNNU.canvas;
+  console.log('BIND ', this, this.canvas);
+    canvas.addEventListener('mousedown', _TYNNU.bindPaint, false);
+    canvas.addEventListener('mouseup', _TYNNU.unbindPaint, false);
+    _TYNNU.root.addEventListener('mouseout', _TYNNU.unbindPaint, false);
+  };
+
+  Tynnu.prototype.unbind = function () {
+    var _TYNNU = this, canvas = _TYNNU.canvas;
+
+    _TYNNU.unbindPaint();
+    canvas.removeEventListener('mousedown', _TYNNU.bindPaint, false);
+    canvas.removeEventListener('mouseup', _TYNNU.unbindPaint, false);
+    _TYNNU.root.removeEventListener('mouseout', _TYNNU.unbindPaint, false);
+  };
+
+  Tynnu.prototype.destroy = function () {
+    var NULL = null, root = this.root;
+    this.unbind();
+    this.root.tynnu = NULL;
+    root.removeChild(this.canvas);
+    root.removeAttribue('hasTynnu');
+    this.root = root = NULL;
+    this.canvas = NULL;
+  };
+
+  this.t = new Tynnu(document.body);
 
   var grid = new Grid(context, 'dotted', null, null, {rand:true});
   window.g = grid;
