@@ -8,33 +8,31 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.8b
+  @version - 0.8c
   @source - https://github.com/livingston/tynnu
 */
 
 (function (window, document) {
-  var isTouchDevice = ("createTouch" in document),
-      deviceType = isTouchDevice? 'touch' : 'mouse',
-      Helper = {
-        roundTo: function (n, x) {
-          var i = x/2,
-              j = n%x,
-              k = j>i? (x-j):(j*-1);
-          return (n + k)
-        },
-        extend: function (what, wit) {
-          var ext = {}, name;
+  var Helper = {
+    roundTo: function (n, x) {
+      var i = x/2,
+          j = n%x,
+          k = j>i? (x-j): -j;
+      return (n + k)
+    },
+    extend: function (what, wit) {
+      var ext = {}, name;
 
-          for (name in wit) {
-            ext[name] = wit[name];
-          }
-          for (name in what) {
-            ext[name] = ext[name]? ext[name] : what[name];
-          }
+      for (name in wit) {
+        ext[name] = wit[name];
+      }
+      for (name in what) {
+        ext[name] = ext[name]? ext[name] : what[name];
+      }
 
-          return ext;
-        }
-      };
+      return ext;
+    }
+  };
 
   var Brush = function () {
     this.brush = "blocks";
@@ -319,7 +317,7 @@
   };
 
   Tynnu.prototype.handleDraw = (function () {
-    if (isTouchDevice) {
+    if ("createTouch" in document) {
       return function () {
         var l = event.changedTouches.length, x ,y,
             _TYNNU = event.target.tynnu,
