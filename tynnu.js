@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.8a
+  @version - 0.8b
   @source - https://github.com/livingston/tynnu
 */
 
@@ -34,112 +34,120 @@
 
           return ext;
         }
-      },
-      Brush = {
-        brush: "blocks",
-        set: function (brush, ctx) {
-          this.brush = (brush in Brushes)? brush : "blocks";
-          this.ctx = ctx;
-        },
-        draw: function (x, y, options) {
-          Brushes[this.brush](x, y, options);
+      };
 
-          Brush.update();
-        },
-        begin: function (x, y) {
-          this.X = x;
-          this.Y = y;
-          this.update();
-        },
-        update: function () {
-          this.prevX = this.X;
-          this.prevY = this.Y;
-        },
-        stop: function () {
-          Brush.points = [];
-          this.ctx.save();
-        },
-        points: []
-      },
-      Brushes = {
-        blocks: function (x, y, options) {
-          var size = (options && options.size) || 10;
+  var Brush = function () {
+    this.brush = "blocks";
+    this.points = [];
+  };
+
+  Brush.prototype.set = function (brush, ctx) {
+    this.brush = (brush in Brushes)? brush : "blocks";
+    this.ctx = ctx;
+  };
+
+  Brush.prototype.draw = function (x, y, options) {
+    Brushes[this.brush](this, x, y, options);
+
+    this.update();
+  };
+
+  Brush.prototype.begin = function (x, y) {
+    this.X = x;
+    this.Y = y;
+    this.update();
+  };
+
+  Brush.prototype.update = function () {
+    this.prevX = this.X;
+    this.prevY = this.Y;
+  };
+
+  Brush.prototype.stop = function () {
+    this.points = [];
+    this.ctx.save();
+  };
+
+  var Brushes = {
+    blocks: function (Brush, x, y, options) {
+      var size = (options && options.size) || 10;
           x = Helper.roundTo(x, size);
           y = Helper.roundTo(y, size);
 
-          Brush.ctx.beginPath();
-          Brush.ctx.fillStyle = 'rgba(6,100,195, 0.5)';
-          Brush.ctx.rect(x,y, size, size);
-          Brush.ctx.fill();
-        },
-        line: function (x, y) {
-          Brush.X = x;
-          Brush.Y = y;
-          Brush.ctx.beginPath();
-          Brush.ctx.lineWidth = 2;
-          Brush.ctx.lineJoin = 'round';
-          Brush.ctx.strokeStyle = 'rgba(6,100,195,1)';
-          Brush.ctx.moveTo(Brush.prevX, Brush.prevY);
-          Brush.ctx.lineTo(x, y);
-          Brush.ctx.stroke();
-        },
-        circles: function (x, y) {
-          Brush.X = x;
-          Brush.Y = y;
-          Brush.ctx.beginPath();
-          Brush.ctx.fillStyle = 'rgba(6,100,195, 0.5)';
-          Brush.ctx.moveTo(Brush.prevX, Brush.prevY);
-          Brush.ctx.arc(x, y, gew, 0, 359, false);
-          Brush.ctx.fill();
-        },
-        curvy: function (x, y) { //based on https://gist.github.com/339070 by Matthew Taylor (rhyolight)
-          var dist = 10, point, l, p = Brush.points,
-              moveTo = CanvasRenderingBrush.ctxD.prototype.moveTo,
-              bezierCurveTo = CanvasRenderingBrush.ctxD.prototype.bezierCurveTo;
+      Brush.ctx.beginPath();
+      Brush.ctx.fillStyle = 'rgba(6,100,195, 0.5)';
+      Brush.ctx.rect(x,y, size, size);
+      Brush.ctx.fill();
+    },
+    line: function (Brush, x, y) {
+      Brush.X = x;
+      Brush.Y = y;
+      Brush.ctx.beginPath();
+      Brush.ctx.lineWidth = 2;
+      Brush.ctx.lineJoin = 'round';
+      Brush.ctx.strokeStyle = 'rgba(6,100,195,1)';
+      Brush.ctx.moveTo(Brush.prevX, Brush.prevY);
+      Brush.ctx.lineTo(x, y);
+      Brush.ctx.stroke();
+    },
+    circles: function (Brush, x, y) {
+      Brush.X = x;
+      Brush.Y = y;
+      Brush.ctx.beginPath();
+      Brush.ctx.fillStyle = 'rgba(6,100,195, 0.5)';
+      Brush.ctx.moveTo(Brush.prevX, Brush.prevY);
+      Brush.ctx.arc(x, y, gew, 0, 359, false);
+      Brush.ctx.fill();
+    },
+    curvy: function (Brush, x, y) { //based on https://gist.github.com/339070 by Matthew Taylor (rhyolight)
+      var dist = 10, point, l, p = Brush.points,
+          moveTo = CanvasRenderingBrush.ctxD.prototype.moveTo,
+          bezierCurveTo = CanvasRenderingBrush.ctxD.prototype.bezierCurveTo;
 
-          Brush.ctx.beginPath();
-          p.push([x,y]);
-          l = p.length;
+      Brush.ctx.beginPath();
+      p.push([x,y]);
+      l = p.length;
 
-          function getPoint(xAgo) {
-            var i = l - dist;
-            for (;++i < l;) {
-                if (p[i]) {
-                    return p[i];
-                }
+      function getPoint(xAgo) {
+        var i = l - dist;
+        for (;++i < l;) {
+            if (p[i]) {
+                return p[i];
             }
-          }
-
-          Brush.ctx.lineJoin = 'round';
-          Brush.ctx.lineWidth = 0.5;
-          Brush.ctx.strokeStyle = 'rgba(6,100,195,1)';
-          Brush.ctx.beginPath();
-
-          point = getPoint();
-          moveTo.apply(Brush.ctx, point);
-          Brush.ctx.bezierCurveTo(point[0], point[1], point[0], point[1], x, y);
-          Brush.ctx.stroke();
         }
-      },
-      Grid = function (options) {
-        var defaults = {
-          type: 'lines',
-          size: 10,
-          root: document.body
-        };
+      }
 
-        options = Helper.extend(defaults, options);
+      Brush.ctx.lineJoin = 'round';
+      Brush.ctx.lineWidth = 0.5;
+      Brush.ctx.strokeStyle = 'rgba(6,100,195,1)';
+      Brush.ctx.beginPath();
 
-        options.h = options.root.clientHeight;
-        options.w = options.root.clientWidth;
-        options.nx = parseInt(options.h/options.size, 10) + 1;
-        options.ny = parseInt(options.w/options.size, 10) + 1;
+      point = getPoint();
+      moveTo.apply(Brush.ctx, point);
+      Brush.ctx.bezierCurveTo(point[0], point[1], point[0], point[1], x, y);
+      Brush.ctx.stroke();
+    }
+  };
 
-        this.options = options;
+  var Grid = function (options) {
+    var defaults = {
+      type: 'lines',
+      size: 10,
+      root: document.body
+    };
 
-        this.setCanvas();
-        this.draw();
-      };
+    options = Helper.extend(defaults, options);
+
+    options.h = options.root.clientHeight;
+    options.w = options.root.clientWidth;
+    options.nx = parseInt(options.h/options.size, 10) + 1;
+    options.ny = parseInt(options.w/options.size, 10) + 1;
+
+    this.options = options;
+
+    this.setCanvas();
+    this.draw();
+  };
 
   Grid.prototype.setCanvas = function () {
     var canvas = document.createElement('canvas'),
@@ -299,14 +307,15 @@
     this.ctx = canvas.getContext('2d');
 
     this.grid = new Grid({ root: root, type: 'dotted', rand: true, size: _OPT.size });
+    this.brush = new Brush();
 
     this.root.appendChild(canvas);
-    Brush.set('line', this.ctx);
+    this.brush.set('line', this.ctx);
     this.bind();
   };
 
   Tynnu.prototype.draw = function (x, y) {
-    Brush.draw(x, y, this.options);
+    this.brush.draw(x, y, this.options);
   };
 
   Tynnu.prototype.handleDraw = (function () {
@@ -339,7 +348,7 @@
     var _TYNNU = this.tynnu,
         root = _TYNNU.root;
 
-    Brush.begin(event.x - root.offsetLeft, event.y - root.offsetTop);
+    _TYNNU.brush.begin(event.x - root.offsetLeft, event.y - root.offsetTop);
     _TYNNU.handleDraw(event);
     _TYNNU.canvas.addEventListener('mousemove', _TYNNU.handleDraw, false);
   };
@@ -347,7 +356,7 @@
   Tynnu.prototype.unbindPaint = function () {
     var _TYNNU = this.tynnu;
 
-    Brush.stop();
+    _TYNNU.brush.stop();
     _TYNNU.canvas.removeEventListener('mousemove', _TYNNU.handleDraw, false);
   };
 
@@ -379,8 +388,6 @@
   };
 
   var board = document.getElementById('board');
-
   board.style.height = (canvasHeight = document.body.clientHeight - document.getElementById('tynnu_toolbar').offsetHeight - 30) + 'px';
-
   this.t = new Tynnu(board);
 }(window, document));
