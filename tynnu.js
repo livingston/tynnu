@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.8c
+  @version - 0.8d
   @source - https://github.com/livingston/tynnu
 */
 
@@ -334,10 +334,9 @@
       }
     } else {
       return function (e) {
-        var _TYNNU = e.target.tynnu,
+        var _TYNNU = (event.target || e.srcElement).tynnu,
             root = _TYNNU.root;
         _TYNNU.draw(e.x - root.offsetLeft, e.y - root.offsetTop);
-        e.preventDefault();
       }
     }
   }());
