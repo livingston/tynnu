@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.8
+  @version - 0.8a
   @source - https://github.com/livingston/tynnu
 */
 
@@ -145,6 +145,7 @@
     var canvas = document.createElement('canvas'),
         _OPT = this.options;
 
+    canvas.id = 'GRID_' + (+new Date());
     canvas.width = _OPT.w;
     canvas.height = _OPT.h;
     canvas.style.position = 'absolute';
@@ -284,14 +285,15 @@
         root = this.root,
         _OPT = this.options;
 
+    canvas.id = this.id;
     root.style.position = 'relative';
     canvas.width = this.width = root.clientWidth;
     canvas.height = this.height = root.clientHeight;
-    canvas.id = this.id;
     canvas.style.left = 0;
     canvas.style.top = 0;
     canvas.style.position = 'absolute';
     canvas.style.zIndex = '10010';
+    canvas.style.cursor = 'crosshair';
 
     this.root.tynnu = this.canvas.tynnu = this;
     this.ctx = canvas.getContext('2d');
@@ -311,28 +313,33 @@
     if (isTouchDevice) {
       return function () {
         var l = event.changedTouches.length, x ,y,
-            _TYNNU = event.target.tynnu;
+            _TYNNU = event.target.tynnu,
+            offsetLeft = _TYNNU.root.offsetLeft,
+            offsetTop = _TYNNU.root.offsetTop;
 
         while (l--) {
           x = event.changedTouches[l].clientX;
           y = event.changedTouches[l].clientY;
-          _TYNNU.draw(x, y);
+          _TYNNU.draw(x - offsetLeft, y - offsetTop);
         }
         _TYNNU = null;
         event.preventDefault();
       }
     } else {
       return function (e) {
-        e.target.tynnu.draw(e.x, e.y);
+        var _TYNNU = e.target.tynnu,
+            root = _TYNNU.root;
+        _TYNNU.draw(e.x - root.offsetLeft, e.y - root.offsetTop);
         e.preventDefault();
       }
     }
   }());
 
   Tynnu.prototype.bindPaint = function () {
-    var _TYNNU = this.tynnu;
+    var _TYNNU = this.tynnu,
+        root = _TYNNU.root;
 
-    Brush.begin(event.x, event.y);
+    Brush.begin(event.x - root.offsetLeft, event.y - root.offsetTop);
     _TYNNU.handleDraw(event);
     _TYNNU.canvas.addEventListener('mousemove', _TYNNU.handleDraw, false);
   };
@@ -371,5 +378,9 @@
     this.canvas = NULL;
   };
 
-  this.t = new Tynnu(document.body);
+  var board = document.getElementById('board');
+
+  board.style.height = (canvasHeight = document.body.clientHeight - document.getElementById('tynnu_toolbar').offsetHeight - 30) + 'px';
+
+  this.t = new Tynnu(board);
 }(window, document));
