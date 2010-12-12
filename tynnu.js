@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.9a
+  @version - 0.9b
   @source - https://github.com/livingston/tynnu
 */
 
@@ -40,7 +40,6 @@
     this.options = Helper.extend(defaults, options);
     this.ctx = this.options.context;
     this.points = [];
-    this.xy = { x:[], y:[] };
   };
 
   Brush.prototype.set = function (brush) {
@@ -71,12 +70,12 @@
     this.points = [];
 
     if (this.options.drawEdges) this.detectEdge.apply(this, arguments);
+    this.xy = { x:[], y:[] };
 
     this.ctx.save();
   };
 
   Brush.prototype.detectEdge = function (e, callback) {
-  if (e.type !== 'mouseup') return;
     var xy = this.xy,
         x = xy.x,
         y = xy.y,
@@ -391,6 +390,7 @@
     _TYNNU.brush.begin(event.x - root.offsetLeft, event.y - root.offsetTop);
     _TYNNU.handleDraw(event);
     _TYNNU.canvas.addEventListener('mousemove', _TYNNU.handleDraw, false);
+    _TYNNU.root.addEventListener('mouseout', _TYNNU.unbindPaint, false);
   };
 
   Tynnu.prototype.unbindPaint = function (e) {
@@ -398,6 +398,7 @@
 
     _TYNNU.brush.stop(e || event);
     _TYNNU.canvas.removeEventListener('mousemove', _TYNNU.handleDraw, false);
+    _TYNNU.root.removeEventListener('mouseout', _TYNNU.unbindPaint, false);
   };
 
   Tynnu.prototype.bind = function () {
@@ -405,7 +406,6 @@
 
     canvas.addEventListener('mousedown', _TYNNU.bindPaint, false);
     canvas.addEventListener('mouseup', _TYNNU.unbindPaint, false);
-    _TYNNU.root.addEventListener('mouseout', _TYNNU.unbindPaint, false);
   };
 
   Tynnu.prototype.unbind = function () {
@@ -414,7 +414,6 @@
     _TYNNU.unbindPaint();
     canvas.removeEventListener('mousedown', _TYNNU.bindPaint, false);
     canvas.removeEventListener('mouseup', _TYNNU.unbindPaint, false);
-    _TYNNU.root.removeEventListener('mouseout', _TYNNU.unbindPaint, false);
   };
 
   Tynnu.prototype.destroy = function () {
