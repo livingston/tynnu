@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.9d
+  @version - 0.9e
   @source - https://github.com/livingston/tynnu
 */
 
@@ -142,7 +142,7 @@
     },
     curvy: function (Brush, x, y) { //based on https://gist.github.com/339070 by Matthew Taylor (rhyolight)
       var dist = 10, point, l, p = Brush.points,
-          moveTo = CanvasRenderingContext2D.ctxD.prototype.moveTo;
+          moveTo = CanvasRenderingContext2D.prototype.moveTo;
 
       Brush.ctx.beginPath();
       p.push([x,y]);
