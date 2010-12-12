@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.9
+  @version - 0.9a
   @source - https://github.com/livingston/tynnu
 */
 
@@ -70,12 +70,12 @@
   Brush.prototype.stop = function (e, callback) {
     this.points = [];
 
-    if (this.options.drawEdges) this.detectEdge(e, callback, [].slice.call(arguments, 2));
+    if (this.options.drawEdges) this.detectEdge.apply(this, arguments);
 
     this.ctx.save();
   };
 
-  Brush.prototype.detectEdge = function (e, callback, args) {
+  Brush.prototype.detectEdge = function (e, callback) {
   if (e.type !== 'mouseup') return;
     var xy = this.xy,
         x = xy.x,
@@ -105,7 +105,7 @@
     context.stroke();
 
     edges = [ minX, minY, Math.max(maxX-minX, 1), Math.max(maxY-minY, 1)];
-    callback && callback.apply(this.ctx, [this.ctx, edges].concat(args));
+    callback && callback.apply(this.ctx, [this.ctx, edges].concat([].slice.call(arguments, 2)));
 
     return edges;
   };
