@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.9b
+  @version - 0.9c
   @source - https://github.com/livingston/tynnu
 */
 
@@ -343,8 +343,8 @@
     canvas.style.zIndex = '10010';
     canvas.style.cursor = 'crosshair';
 
-    this.root.tynnu = this.canvas.tynnu = this;
     this.ctx = canvas.getContext('2d');
+    this.events = {};
 
     this.grid = new Grid({ root: root, type: 'dotted', rand: true, size: _OPT.size });
     this.brush = new Brush({ context: this.ctx, drawEdges: true });
@@ -361,65 +361,78 @@
   Tynnu.prototype.handleDraw = (function () {
     if ("createTouch" in document) {
       return function () {
-        var l = event.changedTouches.length, x ,y,
-            _TYNNU = event.target.tynnu,
-            offsetLeft = _TYNNU.root.offsetLeft,
-            offsetTop = _TYNNU.root.offsetTop;
+        var _TYNNU = this
 
-        while (l--) {
-          x = event.changedTouches[l].clientX;
-          y = event.changedTouches[l].clientY;
-          _TYNNU.draw(x - offsetLeft, y - offsetTop);
+        return function () {
+          var l = event.changedTouches.length, x ,y,
+              offsetLeft = _TYNNU.root.offsetLeft,
+              offsetTop = _TYNNU.root.offsetTop;
+
+          while (l--) {
+            x = event.changedTouches[l].clientX;
+            y = event.changedTouches[l].clientY;
+            _TYNNU.draw(x - offsetLeft, y - offsetTop);
+          }
+          _TYNNU = null;
+          event.preventDefault();
         }
-        _TYNNU = null;
-        event.preventDefault();
       }
     } else {
-      return function (e) {
-        var _TYNNU = (e.srcElement || event.target).tynnu,
-            root = _TYNNU.root;
-        _TYNNU.draw(e.x - root.offsetLeft, e.y - root.offsetTop);
+      return function () {
+        var _TYNNU = this, root = _TYNNU.root;
+
+        return function (e) {
+          _TYNNU.draw(e.x - root.offsetLeft, e.y - root.offsetTop);
+        };
       }
     }
   }());
 
   Tynnu.prototype.bindPaint = function () {
-    var _TYNNU = this.tynnu,
+    var _TYNNU = this,
         root = _TYNNU.root;
+    _TYNNU.events['draw'] = _TYNNU.handleDraw();
 
-    _TYNNU.brush.begin(event.x - root.offsetLeft, event.y - root.offsetTop);
-    _TYNNU.handleDraw(event);
-    _TYNNU.canvas.addEventListener('mousemove', _TYNNU.handleDraw, false);
-    _TYNNU.root.addEventListener('mouseout', _TYNNU.unbindPaint, false);
+    return function () {
+      _TYNNU.brush.begin(event.x - root.offsetLeft, event.y - root.offsetTop);
+      _TYNNU.events['draw'](event);
+      _TYNNU.canvas.addEventListener('mousemove', _TYNNU.events['draw'], false);
+      _TYNNU.root.addEventListener('mouseout', _TYNNU.events['unbindPaint'], false);
+    };
   };
 
-  Tynnu.prototype.unbindPaint = function (e) {
-    var _TYNNU = this.tynnu;
+  Tynnu.prototype.unbindPaint = function () {
+    var _TYNNU = this;
 
-    _TYNNU.brush.stop(e || event);
-    _TYNNU.canvas.removeEventListener('mousemove', _TYNNU.handleDraw, false);
-    _TYNNU.root.removeEventListener('mouseout', _TYNNU.unbindPaint, false);
+    return function (e) {
+      _TYNNU.brush.stop(e || event);
+      _TYNNU.canvas.removeEventListener('mousemove', _TYNNU.events['draw'], false);
+      _TYNNU.root.removeEventListener('mouseout', _TYNNU.events['unbindPaint'], false);
+    }
   };
 
   Tynnu.prototype.bind = function () {
     var _TYNNU = this, canvas = _TYNNU.canvas;
 
-    canvas.addEventListener('mousedown', _TYNNU.bindPaint, false);
-    canvas.addEventListener('mouseup', _TYNNU.unbindPaint, false);
+    _TYNNU.events['bindPaint'] = _TYNNU.bindPaint();
+    _TYNNU.events['unbindPaint'] = _TYNNU.unbindPaint();
+
+    canvas.addEventListener('mousedown', _TYNNU.events['bindPaint'], false);
+    canvas.addEventListener('mouseup', _TYNNU.events['unbindPaint'], false);
   };
 
   Tynnu.prototype.unbind = function () {
     var _TYNNU = this, canvas = _TYNNU.canvas;
 
-    _TYNNU.unbindPaint();
-    canvas.removeEventListener('mousedown', _TYNNU.bindPaint, false);
-    canvas.removeEventListener('mouseup', _TYNNU.unbindPaint, false);
+    _TYNNU.events['unbindPaint']();
+    canvas.removeEventListener('mousedown', this.events['bindPaint'], false);
+    canvas.removeEventListener('mouseup', _TYNNU.events['unbindPaint'], false);
   };
 
   Tynnu.prototype.destroy = function () {
     var NULL = null, root = this.root;
     this.unbind();
-    root.tynnu = this.canvas.tynnu = NULL;
+
     root.removeChild(this.canvas);
     root.removeAttribue('hasTynnu');
     this.root = root = NULL;
