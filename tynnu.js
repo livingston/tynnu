@@ -8,18 +8,12 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.9c
+  @version - 0.9d
   @source - https://github.com/livingston/tynnu
 */
 
 (function (window, document) {
   var Helper = {
-    roundTo: function (n, x) {
-      var i = x/2,
-          j = n%x,
-          k = j>i? (x-j): -j;
-      return (n + k)
-    },
     extend: function (what, wit) {
       var ext = {}, name;
 
@@ -111,9 +105,15 @@
 
   var Brushes = {
     blocks: function (Brush, x, y, options) {
-      var size = (options && options.size) || 10;
-          x = Helper.roundTo(x, size);
-          y = Helper.roundTo(y, size);
+      var size = (options && options.size) || 10,
+          roundTo = function (n, x) {
+            var i = x/2,
+                j = n%x,
+                k = j>i? (x-j): -j;
+            return (n + k)
+          },
+          x = roundTo(x, size);
+          y = roundTo(y, size);
 
       Brush.ctx.beginPath();
       Brush.ctx.fillStyle = 'rgba(6,100,195, 0.5)';
