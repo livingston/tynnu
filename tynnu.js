@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.8d
+  @version - 0.9
   @source - https://github.com/livingston/tynnu
 */
 
@@ -34,18 +34,23 @@
     }
   };
 
-  var Brush = function () {
-    this.brush = "blocks";
+  var Brush = function (options) {
+    var defaults = { drawEdges: false, brush: "blocks", context: null };
+
+    this.options = Helper.extend(defaults, options);
+    this.ctx = this.options.context;
     this.points = [];
+    this.xy = { x:[], y:[] };
   };
 
-  Brush.prototype.set = function (brush, ctx) {
-    this.brush = (brush in Brushes)? brush : "blocks";
-    this.ctx = ctx;
+  Brush.prototype.set = function (brush) {
+    this.options.brush = (brush in Brushes)? brush : "blocks";
   };
 
   Brush.prototype.draw = function (x, y, options) {
-    Brushes[this.brush](this, x, y, options);
+    this.xy.x.push(x);
+    this.xy.y.push(y);
+    Brushes[this.options.brush](this, x, y, options);
 
     this.update();
   };
@@ -53,6 +58,7 @@
   Brush.prototype.begin = function (x, y) {
     this.X = x;
     this.Y = y;
+    this.xy = { x:[x], y:[y] };
     this.update();
   };
 
@@ -61,9 +67,47 @@
     this.prevY = this.Y;
   };
 
-  Brush.prototype.stop = function () {
+  Brush.prototype.stop = function (e, callback) {
     this.points = [];
+
+    if (this.options.drawEdges) this.detectEdge(e, callback, [].slice.call(arguments, 2));
+
     this.ctx.save();
+  };
+
+  Brush.prototype.detectEdge = function (e, callback, args) {
+  if (e.type !== 'mouseup') return;
+    var xy = this.xy,
+        x = xy.x,
+        y = xy.y,
+        sortFn = function (a, b) { return a-b },
+        sortedX = x.sort(sortFn),
+        sortedY = y.sort(sortFn),
+        minX = sortedX.shift(),
+        maxX = sortedX.pop(),
+        minY = sortedY.shift(),
+        maxY = sortedY.pop(),
+        context = this.ctx, edges;
+
+    context.beginPath();
+
+    context.moveTo(minX, minY);
+    context.lineTo(minX, minY);
+    context.lineTo(maxX, minY);
+    context.lineTo(maxX, maxY);
+    context.lineTo(minX, maxY);
+
+    context.closePath();
+
+    context.strokeStyle = '#ff0000';
+    context.lineWidth = 0.5;
+
+    context.stroke();
+
+    edges = [ minX, minY, Math.max(maxX-minX, 1), Math.max(maxY-minY, 1)];
+    callback && callback.apply(this.ctx, [this.ctx, edges].concat(args));
+
+    return edges;
   };
 
   var Brushes = {
@@ -99,8 +143,7 @@
     },
     curvy: function (Brush, x, y) { //based on https://gist.github.com/339070 by Matthew Taylor (rhyolight)
       var dist = 10, point, l, p = Brush.points,
-          moveTo = CanvasRenderingBrush.ctxD.prototype.moveTo,
-          bezierCurveTo = CanvasRenderingBrush.ctxD.prototype.bezierCurveTo;
+          moveTo = CanvasRenderingContext2D.ctxD.prototype.moveTo;
 
       Brush.ctx.beginPath();
       p.push([x,y]);
@@ -305,10 +348,10 @@
     this.ctx = canvas.getContext('2d');
 
     this.grid = new Grid({ root: root, type: 'dotted', rand: true, size: _OPT.size });
-    this.brush = new Brush();
+    this.brush = new Brush({ context: this.ctx, drawEdges: true });
 
     this.root.appendChild(canvas);
-    this.brush.set('line', this.ctx);
+    this.brush.set('line');
     this.bind();
   };
 
@@ -334,7 +377,7 @@
       }
     } else {
       return function (e) {
-        var _TYNNU = (event.target || e.srcElement).tynnu,
+        var _TYNNU = (e.srcElement || event.target).tynnu,
             root = _TYNNU.root;
         _TYNNU.draw(e.x - root.offsetLeft, e.y - root.offsetTop);
       }
@@ -350,10 +393,10 @@
     _TYNNU.canvas.addEventListener('mousemove', _TYNNU.handleDraw, false);
   };
 
-  Tynnu.prototype.unbindPaint = function () {
+  Tynnu.prototype.unbindPaint = function (e) {
     var _TYNNU = this.tynnu;
 
-    _TYNNU.brush.stop();
+    _TYNNU.brush.stop(e || event);
     _TYNNU.canvas.removeEventListener('mousemove', _TYNNU.handleDraw, false);
   };
 
