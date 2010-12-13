@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.9e
+  @version - 0.9f
   @source - https://github.com/livingston/tynnu
 */
 
@@ -29,7 +29,7 @@
   };
 
   var Brush = function (options) {
-    var defaults = { drawEdges: false, brush: "blocks", context: null };
+    var defaults = { drawEdges: false, brush: "blocks", context: null, edgeBuffer: 0 };
 
     this.options = Helper.extend(defaults, options);
     this.ctx = this.options.context;
@@ -73,13 +73,14 @@
     var xy = this.xy,
         x = xy.x,
         y = xy.y,
+        edgeBuffer = this.options.edgeBuffer,
         sortFn = function (a, b) { return a-b },
         sortedX = x.sort(sortFn),
         sortedY = y.sort(sortFn),
-        minX = sortedX.shift(),
-        maxX = sortedX.pop(),
-        minY = sortedY.shift(),
-        maxY = sortedY.pop(),
+        minX = sortedX.shift() - edgeBuffer,
+        maxX = sortedX.pop() + edgeBuffer,
+        minY = sortedY.shift() - edgeBuffer,
+        maxY = sortedY.pop() + edgeBuffer,
         context = this.ctx, edges;
 
     context.beginPath();
@@ -119,6 +120,7 @@
       Brush.ctx.fillStyle = 'rgba(6,100,195, 0.5)';
       Brush.ctx.rect(x,y, size, size);
       Brush.ctx.fill();
+      Brush.options.edgeBuffer = size;
     },
     line: function (Brush, x, y) {
       Brush.X = x;
@@ -132,13 +134,15 @@
       Brush.ctx.stroke();
     },
     circles: function (Brush, x, y) {
+      var rad = Brush.options.rad || 10;
       Brush.X = x;
       Brush.Y = y;
       Brush.ctx.beginPath();
       Brush.ctx.fillStyle = 'rgba(6,100,195, 0.5)';
       Brush.ctx.moveTo(Brush.prevX, Brush.prevY);
-      Brush.ctx.arc(x, y, gew, 0, 359, false);
+      Brush.ctx.arc(x, y, rad, 0, 359, false);
       Brush.ctx.fill();
+      Brush.options.edgeBuffer = rad;
     },
     curvy: function (Brush, x, y) { //based on https://gist.github.com/339070 by Matthew Taylor (rhyolight)
       var dist = 10, point, l, p = Brush.points,
@@ -166,6 +170,7 @@
       moveTo.apply(Brush.ctx, point);
       Brush.ctx.bezierCurveTo(point[0], point[1], point[0], point[1], x, y);
       Brush.ctx.stroke();
+      Brush.options.edgeBuffer = dist;
     }
   };
 
