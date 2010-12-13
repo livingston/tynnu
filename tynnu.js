@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.9f
+  @version - 0.9g
   @source - https://github.com/livingston/tynnu
 */
 
@@ -387,7 +387,7 @@
         var _TYNNU = this, root = _TYNNU.root;
 
         return function (e) {
-          _TYNNU.draw(e.x - root.offsetLeft, e.y - root.offsetTop);
+          _TYNNU.draw(e.clientX - root.offsetLeft, e.clientY - root.offsetTop);
         };
       }
     }
@@ -424,6 +424,7 @@
 
     canvas.addEventListener('mousedown', _TYNNU.events['bindPaint'], false);
     canvas.addEventListener('mouseup', _TYNNU.events['unbindPaint'], false);
+    _TYNNU.root.addEventListener('dragstart', _TYNNU.events['unbindPaint'], false);
   };
 
   Tynnu.prototype.unbind = function () {
@@ -432,6 +433,7 @@
     _TYNNU.events['unbindPaint']();
     canvas.removeEventListener('mousedown', this.events['bindPaint'], false);
     canvas.removeEventListener('mouseup', _TYNNU.events['unbindPaint'], false);
+    _TYNNU.root.removeEventListener('dragstart', _TYNNU.events['unbindPaint'], false);
   };
 
   Tynnu.prototype.destroy = function () {
