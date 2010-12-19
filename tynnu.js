@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.9h
+  @version - 1.0
   @source - https://github.com/livingston/tynnu
 */
 
@@ -25,6 +25,9 @@
       }
 
       return ext;
+    },
+    capitalize: function (str) {
+      return str.substr(0, 1).toUpperCase().concat(str.substr(1))
     }
   };
 
@@ -452,8 +455,86 @@
     this.canvas = NULL;
   };
 
-  var board = document.getElementById('board');
-  board.style.height = (canvasHeight = document.body.clientHeight - document.getElementById('tynnu_toolbar').offsetHeight - 30) + 'px';
+  /*
+    TynnuBar - Creates a Toolbar for configuring Tynnu
 
-  this.t = new Tynnu(board);
+    @params - options for initializing an instance of TynnuBar
+  */
+  var TynnuBar = function (options) {
+    var defaults = {};
+
+    this.options = Helper.extend(defaults, options);
+    this.root = this.options.root;
+
+    this.setup();
+  };
+
+  TynnuBar.prototype.setup = function () {
+    var edgeDetector = document.createElement('div');
+    edgeDetector.innerHTML = "<label for='edgeDetector'>Edge Detection</label><input type='checkbox' id='edgeDetector' />";
+
+    this.root.appendChild(edgeDetector);
+    this.edgeDetector = edgeDetector.getElementsByTagName('input')[0];
+    this.edgeDetector.checked = !!this.options.tynnu.brush.options.drawEdges;
+    this.setupGridSelector();
+    this.setupBrushSelector();
+
+    this.bind();
+  };
+
+  TynnuBar.prototype.bind = function () {
+    var _TB = this,
+        brushOptions = { drawEdges: false };
+
+    _TB.edgeDetector.addEventListener('change', function () { brushOptions.drawEdges = this.checked; _TB.options.tynnu.brush.set(brushOptions) }, false);
+    _TB.brushSelector.addEventListener('change', function () { brushOptions.brush = this.value; _TB.options.tynnu.brush.set(brushOptions) }, false);
+    _TB.gridSelector.addEventListener('change', function () { _TB.options.tynnu.grid.update({ type: this.value }) }, false);
+  };
+
+  TynnuBar.prototype.setupGridSelector = function () {
+    var selector = document.createElement('select'), type, option,
+        current = this.options.tynnu.grid.options.type;
+
+    for (type in Grid.types) {
+      if (Grid.types.hasOwnProperty(type)) {
+        option = document.createElement('option');
+        option.value = type;
+        if ( current == type ) {
+          option.selected = 'true';
+        }
+        option.innerHTML = Helper.capitalize(type);
+        selector.appendChild(option);
+      }
+    }
+
+    this.root.appendChild(selector);
+
+    this.gridSelector = selector;
+  };
+
+  TynnuBar.prototype.setupBrushSelector = function () {
+    var selector = document.createElement('select'), brush, option,
+        current = this.options.tynnu.brush.options.brush;
+
+    for (brush in Brushes) {
+      if (Brushes.hasOwnProperty(brush)) {
+        option = document.createElement('option');
+        option.value = brush;
+        if ( brush == current ) {
+          option.selected = 'true';
+        }
+        option.innerHTML = Helper.capitalize(brush);
+        selector.appendChild(option);
+      }
+    }
+
+    this.root.appendChild(selector);
+
+    this.brushSelector = selector;
+  };
+
+  var board = document.getElementById('board');
+  board.style.height = (document.body.clientHeight - document.getElementById('tynnu_toolbar').offsetHeight - 30) + 'px';
+
+  this.tb = new TynnuBar({ root: document.getElementById('tynnu_toolbar'), tynnu: new Tynnu(board) });
 }(window, document));
