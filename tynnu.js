@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 0.9g
+  @version - 0.9h
   @source - https://github.com/livingston/tynnu
 */
 
@@ -21,7 +21,7 @@
         ext[name] = wit[name];
       }
       for (name in what) {
-        ext[name] = ext[name]? ext[name] : what[name];
+        ext[name] = (typeof ext[name] !== 'undefined')? ext[name] : what[name];
       }
 
       return ext;
@@ -36,13 +36,16 @@
     this.points = [];
   };
 
-  Brush.prototype.set = function (brush) {
-    this.options.brush = (brush in Brushes)? brush : "blocks";
+  Brush.prototype.set = function (options) {
+    this.options = Helper.extend(this.options, options || {})
+    this.options.brush = (this.options.brush in Brushes)? this.options.brush : "blocks";
   };
 
   Brush.prototype.draw = function (x, y, options) {
     this.xy.x.push(x);
     this.xy.y.push(y);
+    this.X = x;
+    this.Y = y;
     Brushes[this.options.brush](this, x, y, options);
 
     this.update();
@@ -65,6 +68,7 @@
 
     if (this.options.drawEdges) this.detectEdge.apply(this, arguments);
     this.xy = { x:[], y:[] };
+    this.options.edgeBuffer = 0;
 
     this.ctx.save();
   };
@@ -355,7 +359,7 @@
     this.brush = new Brush({ context: this.ctx, drawEdges: true });
 
     this.root.appendChild(canvas);
-    this.brush.set('line');
+    this.brush.set({ brush: 'line' });
     this.bind();
   };
 
@@ -387,7 +391,9 @@
         var _TYNNU = this, root = _TYNNU.root;
 
         return function (e) {
+          e = e || event;
           _TYNNU.draw(e.clientX - root.offsetLeft, e.clientY - root.offsetTop);
+          e.preventDefault();
         };
       }
     }
@@ -448,5 +454,6 @@
 
   var board = document.getElementById('board');
   board.style.height = (canvasHeight = document.body.clientHeight - document.getElementById('tynnu_toolbar').offsetHeight - 30) + 'px';
+
   this.t = new Tynnu(board);
 }(window, document));
