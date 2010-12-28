@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 1.0
+  @version - 1.0.1
   @source - https://github.com/livingston/tynnu
 */
 
@@ -130,15 +130,31 @@
       Brush.options.edgeBuffer = size;
     },
     line: function (Brush, x, y) {
+      var ctx = Brush.ctx,
+          _strokeStyle = ctx.strokeStyle,
+          _shadowBlur = ctx.shadowBlur,
+          _shadowColor = ctx.shadowColor,
+          _lineWidth = ctx.lineWidth,
+          _lineJoin = ctx.lineJoin;
+
       Brush.X = x;
       Brush.Y = y;
-      Brush.ctx.beginPath();
-      Brush.ctx.lineWidth = 2;
-      Brush.ctx.lineJoin = 'round';
-      Brush.ctx.strokeStyle = 'rgba(6,100,195,1)';
-      Brush.ctx.moveTo(Brush.prevX, Brush.prevY);
-      Brush.ctx.lineTo(x, y);
-      Brush.ctx.stroke();
+      ctx.beginPath();
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = 'rgba(6,100,195,1)';
+			ctx.shadowBlur = 10.0;
+      ctx.shadowColor = 'rgba(6,100,195, 1)';
+      ctx.moveTo(Brush.prevX, Brush.prevY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+
+      Brush.options.edgeBuffer = 5;
+      ctx.strokeStyle = _strokeStyle;
+      ctx.shadowBlur = _shadowBlur;
+      ctx.shadowColor = _shadowColor;
+      ctx.lineWidth = _lineWidth;
+      ctx.lineJoin = _lineJoin;
     },
     circles: function (Brush, x, y) {
       var rad = Brush.options.rad || 10;
@@ -256,6 +272,10 @@
     Grid.types[name] = fn;
   };
 
+  Grid.addType('Empty', function (ctx, grid, options) {
+    return null
+  });
+
   Grid.addType('lines', function (ctx, grid) {
     var size = grid.get('size'),
         w = grid.get('w'),
@@ -326,7 +346,8 @@
 
   var Tynnu = function (root, options) {
     var defaults = {
-      size: 10
+      size: 10,
+      drawEdges: false
     };
 
     this.root = root = (root && root.nodeType == 1) ? root : document.body;
@@ -359,7 +380,7 @@
     this.events = {};
 
     this.grid = new Grid({ root: root, type: 'dotted', rand: true, size: _OPT.size });
-    this.brush = new Brush({ context: this.ctx, drawEdges: true });
+    this.brush = new Brush({ context: this.ctx, drawEdges: _OPT.drawEdges });
 
     this.root.appendChild(canvas);
     this.brush.set({ brush: 'line' });
@@ -492,8 +513,10 @@
   };
 
   TynnuBar.prototype.setupGridSelector = function () {
-    var selector = document.createElement('select'), type, option,
-        current = this.options.tynnu.grid.options.type;
+    var frag = document.createElement('span'),
+        selector = document.createElement('select'), type, option,
+        current = this.options.tynnu.grid.options.type,
+        label = document.createElement('label');
 
     for (type in Grid.types) {
       if (Grid.types.hasOwnProperty(type)) {
@@ -507,14 +530,20 @@
       }
     }
 
-    this.root.appendChild(selector);
+    label.textContent = 'Grid Type';
+
+    frag.appendChild(label);
+    frag.appendChild(selector);
+    this.root.appendChild(frag);
 
     this.gridSelector = selector;
   };
 
   TynnuBar.prototype.setupBrushSelector = function () {
-    var selector = document.createElement('select'), brush, option,
-        current = this.options.tynnu.brush.options.brush;
+    var frag = document.createElement('span'),
+        selector = document.createElement('select'), brush, option,
+        current = this.options.tynnu.brush.options.brush,
+        label = document.createElement('label');
 
     for (brush in Brushes) {
       if (Brushes.hasOwnProperty(brush)) {
@@ -528,7 +557,11 @@
       }
     }
 
-    this.root.appendChild(selector);
+    label.textContent = 'Brush Type';
+
+    frag.appendChild(label);
+    frag.appendChild(selector);
+    this.root.appendChild(frag);
 
     this.brushSelector = selector;
   };
@@ -536,5 +569,5 @@
   var board = document.getElementById('board');
   board.style.height = (document.body.clientHeight - document.getElementById('tynnu_toolbar').offsetHeight - 30) + 'px';
 
-  this.tb = new TynnuBar({ root: document.getElementById('tynnu_toolbar'), tynnu: new Tynnu(board) });
+  this.tb = new TynnuBar({ root: document.getElementById('tynnu_toolbar'), tynnu: new Tynnu(board, { drawEdges: false }) });
 }(window, document));
