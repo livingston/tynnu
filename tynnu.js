@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 1.0.1
+  @version - 1.0.2
   @source - https://github.com/livingston/tynnu
 */
 
