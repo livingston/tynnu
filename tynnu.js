@@ -145,6 +145,7 @@
       ctx.strokeStyle = 'rgba(6,100,195,1)';
 			ctx.shadowBlur = 10.0;
       ctx.shadowColor = 'rgba(6,100,195, 1)';
+
       ctx.moveTo(Brush.prevX, Brush.prevY);
       ctx.lineTo(x, y);
       ctx.stroke();
@@ -417,7 +418,7 @@
         return function (e) {
           e = e || event;
           _TYNNU.draw(e.clientX - root.offsetLeft, e.clientY - root.offsetTop);
-          e.preventDefault();
+          e.preventDefault()
         };
       }
     }
@@ -428,9 +429,10 @@
         root = _TYNNU.root;
     _TYNNU.events['draw'] = _TYNNU.handleDraw();
 
-    return function () {
-      _TYNNU.brush.begin(event.x - root.offsetLeft, event.y - root.offsetTop);
-      _TYNNU.events['draw'](event);
+    return function (e) {
+      e = e || event;
+      _TYNNU.brush.begin(e.clientX - root.offsetLeft, e.clientY - root.offsetTop);
+      _TYNNU.events['draw'](e);
       _TYNNU.canvas.addEventListener('mousemove', _TYNNU.events['draw'], false);
       _TYNNU.root.addEventListener('mouseout', _TYNNU.events['unbindPaint'], false);
     };
