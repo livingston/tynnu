@@ -8,7 +8,7 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 1.0.2
+  @version - 1.0.3
   @source - https://github.com/livingston/tynnu
 */
 
@@ -233,6 +233,7 @@
     _OPT.root.appendChild(canvas);
 
     this.options.context = canvas.getContext('2d');
+    canvas = null;
   };
 
   Grid.prototype.get = function (w) {
@@ -384,6 +385,7 @@
     this.brush = new Brush({ context: this.ctx, drawEdges: _OPT.drawEdges });
 
     this.root.appendChild(canvas);
+    canvas = null;
     this.brush.set({ brush: 'line' });
     this.bind();
   };
@@ -395,7 +397,7 @@
   Tynnu.prototype.handleDraw = (function () {
     if ("createTouch" in document) {
       return function () {
-        var _TYNNU = this
+        var _TYNNU = this;
 
         return function () {
           var l = event.changedTouches.length, x ,y,
@@ -493,12 +495,16 @@
   };
 
   TynnuBar.prototype.setup = function () {
-    var edgeDetector = document.createElement('div');
+    var edgeDetector = document.createElement('span');
+
     edgeDetector.innerHTML = "<label for='edgeDetector'>Edge Detection</label><input type='checkbox' id='edgeDetector' />";
 
+    this.loadStyles();
     this.root.appendChild(edgeDetector);
-    this.edgeDetector = edgeDetector.getElementsByTagName('input')[0];
-    this.edgeDetector.checked = !!this.options.tynnu.brush.options.drawEdges;
+    this.edgeDetector = edgeDetector = edgeDetector.getElementsByTagName('input')[0];
+    edgeDetector.checked = !!this.options.tynnu.brush.options.drawEdges;
+    edgeDetector = null;
+
     this.setupGridSelector();
     this.setupBrushSelector();
 
@@ -507,11 +513,23 @@
 
   TynnuBar.prototype.bind = function () {
     var _TB = this,
-        brushOptions = { drawEdges: false };
+        brushOptions = { drawEdges: false },
+        _tynnu = _TB.options.tynnu;
 
-    _TB.edgeDetector.addEventListener('change', function () { brushOptions.drawEdges = this.checked; _TB.options.tynnu.brush.set(brushOptions) }, false);
-    _TB.brushSelector.addEventListener('change', function () { brushOptions.brush = this.value; _TB.options.tynnu.brush.set(brushOptions) }, false);
-    _TB.gridSelector.addEventListener('change', function () { _TB.options.tynnu.grid.update({ type: this.value }) }, false);
+    _TB.edgeDetector.addEventListener('change', function () { brushOptions.drawEdges = this.checked; _tynnu.brush.set(brushOptions) }, false);
+    _TB.brushSelector.addEventListener('change', function () { brushOptions.brush = this.value; _tynnu.brush.set(brushOptions) }, false);
+    _TB.gridSelector.addEventListener('change', function () { _tynnu.grid.update({ type: this.value }) }, false);
+  };
+
+  TynnuBar.prototype.loadStyles = function () {
+    var styles = document.createElement('style'),
+        root = this.root;
+
+    root.className = 'TYNNU_BAR';
+    styles.innerHTML = '.TYNNU_BAR span { padding:0 0 0 10px } .TYNNU_BAR label:after { content: ":"; padding:0 5px } .TYNNU_BAR input { vertical-align:middle; margin-top:0 } ';
+
+    document.body.parentNode.firstChild.appendChild(styles);
+    styles = null;
   };
 
   TynnuBar.prototype.setupGridSelector = function () {
@@ -537,8 +555,9 @@
     frag.appendChild(label);
     frag.appendChild(selector);
     this.root.appendChild(frag);
-
     this.gridSelector = selector;
+
+    frag = selector = label = null;
   };
 
   TynnuBar.prototype.setupBrushSelector = function () {
@@ -564,8 +583,9 @@
     frag.appendChild(label);
     frag.appendChild(selector);
     this.root.appendChild(frag);
-
     this.brushSelector = selector;
+
+    frag = label = selector = option = null;
   };
 
   var board = document.getElementById('board');
