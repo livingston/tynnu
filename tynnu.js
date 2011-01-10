@@ -8,30 +8,36 @@
 /*! tynnu.js
 
   @author - Livingston Samuel
-  @version - 1.0.3
+  @version - 1.0.4
   @source - https://github.com/livingston/tynnu
 */
 
 (function (window, document) {
-  var Helper = {
+  var Brush, Brushes, Helper, Grid, Tynnu, TynnuBar, board;
+
+  Helper = {
     extend: function (what, wit) {
       var ext = {}, name;
 
       for (name in wit) {
-        ext[name] = wit[name];
+        if (wit.hasOwnProperty(name)) {
+          ext[name] = wit[name];
+        }
       }
       for (name in what) {
-        ext[name] = (typeof ext[name] !== 'undefined')? ext[name] : what[name];
+        if (what.hasOwnProperty(name)) {
+          ext[name] = (typeof ext[name] !== 'undefined') ? ext[name] : what[name];
+        }
       }
 
       return ext;
     },
     capitalize: function (str) {
-      return str.substr(0, 1).toUpperCase().concat(str.substr(1))
+      return str.substr(0, 1).toUpperCase().concat(str.substr(1));
     }
   };
 
-  var Brush = function (options) {
+  Brush = function (options) {
     var defaults = { drawEdges: false, brush: "blocks", context: null, edgeBuffer: 0 };
 
     this.options = Helper.extend(defaults, options);
@@ -40,8 +46,8 @@
   };
 
   Brush.prototype.set = function (options) {
-    this.options = Helper.extend(this.options, options || {})
-    this.options.brush = (this.options.brush in Brushes)? this.options.brush : "blocks";
+    this.options = Helper.extend(this.options, options || {});
+    this.options.brush = (this.options.brush in Brushes) ? this.options.brush : "blocks";
   };
 
   Brush.prototype.draw = function (x, y, options) {
@@ -57,7 +63,7 @@
   Brush.prototype.begin = function (x, y) {
     this.X = x;
     this.Y = y;
-    this.xy = { x:[x], y:[y] };
+    this.xy = { x: [x], y: [y] };
     this.update();
   };
 
@@ -69,8 +75,11 @@
   Brush.prototype.stop = function (e, callback) {
     this.points = [];
 
-    if (this.options.drawEdges) this.detectEdge.apply(this, arguments);
-    this.xy = { x:[], y:[] };
+    if (this.options.drawEdges) {
+      this.detectEdge.apply(this, arguments);
+    }
+
+    this.xy = { x: [], y: [] };
     this.options.edgeBuffer = 0;
 
     this.ctx.save();
@@ -81,7 +90,7 @@
         x = xy.x,
         y = xy.y,
         edgeBuffer = this.options.edgeBuffer,
-        sortFn = function (a, b) { return a-b },
+        sortFn = function (a, b) { return a - b; },
         sortedX = x.sort(sortFn),
         sortedY = y.sort(sortFn),
         minX = sortedX.shift() - edgeBuffer,
@@ -105,37 +114,40 @@
 
     context.stroke();
 
-    edges = [ minX, minY, Math.max(maxX-minX, 1), Math.max(maxY-minY, 1)];
-    callback && callback.apply(this.ctx, [this.ctx, edges].concat([].slice.call(arguments, 2)));
+    edges = [ minX, minY, Math.max(maxX - minX, 1), Math.max(maxY - minY, 1)];
+
+    if (callback) {
+      callback.apply(this.ctx, [this.ctx, edges].concat([].slice.call(arguments, 2)));
+    }
 
     return edges;
   };
 
-  var Brushes = {
+  Brushes = {
     blocks: function (Brush, x, y, options) {
       var size = (options && options.size) || 10,
           roundTo = function (n, x) {
-            var i = x/2,
-                j = n%x,
-                k = j>i? (x-j): -j;
-            return (n + k)
-          },
-          x = roundTo(x, size);
-          y = roundTo(y, size);
+            var i = x / 2,
+                j = n % x,
+                k = (j > i) ? (x - j) : -j;
+            return (n + k);
+          };
+      x = roundTo(x, size);
+      y = roundTo(y, size);
 
       Brush.ctx.beginPath();
       Brush.ctx.fillStyle = 'rgba(6,100,195, 0.5)';
-      Brush.ctx.rect(x,y, size, size);
+      Brush.ctx.rect(x, y, size, size);
       Brush.ctx.fill();
       Brush.options.edgeBuffer = size;
     },
     line: function (Brush, x, y) {
       var ctx = Brush.ctx,
-          _strokeStyle = ctx.strokeStyle,
-          _shadowBlur = ctx.shadowBlur,
-          _shadowColor = ctx.shadowColor,
-          _lineWidth = ctx.lineWidth,
-          _lineJoin = ctx.lineJoin;
+          strokeStyle = ctx.strokeStyle,
+          shadowBlur = ctx.shadowBlur,
+          shadowColor = ctx.shadowColor,
+          lineWidth = ctx.lineWidth,
+          lineJoin = ctx.lineJoin;
 
       Brush.X = x;
       Brush.Y = y;
@@ -151,11 +163,11 @@
       ctx.stroke();
 
       Brush.options.edgeBuffer = 5;
-      ctx.strokeStyle = _strokeStyle;
-      ctx.shadowBlur = _shadowBlur;
-      ctx.shadowColor = _shadowColor;
-      ctx.lineWidth = _lineWidth;
-      ctx.lineJoin = _lineJoin;
+      ctx.strokeStyle = strokeStyle;
+      ctx.shadowBlur = shadowBlur;
+      ctx.shadowColor = shadowColor;
+      ctx.lineWidth = lineWidth;
+      ctx.lineJoin = lineJoin;
     },
     circles: function (Brush, x, y) {
       var rad = Brush.options.rad || 10;
@@ -173,12 +185,12 @@
           moveTo = CanvasRenderingContext2D.prototype.moveTo;
 
       Brush.ctx.beginPath();
-      p.push([x,y]);
+      p.push([x, y]);
       l = p.length;
 
       function getPoint(xAgo) {
         var i = l - dist;
-        for (;++i < l;) {
+        for (; ++i < l;) {
             if (p[i]) {
                 return p[i];
             }
@@ -198,7 +210,7 @@
     }
   };
 
-  var Grid = function (options) {
+  Grid = function (options) {
     var defaults = {
       type: 'lines',
       size: 10,
@@ -209,8 +221,8 @@
 
     options.h = options.root.clientHeight;
     options.w = options.root.clientWidth;
-    options.nx = parseInt(options.h/options.size, 10) + 1;
-    options.ny = parseInt(options.w/options.size, 10) + 1;
+    options.nx = parseInt(options.h / options.size, 10) + 1;
+    options.ny = parseInt(options.w / options.size, 10) + 1;
 
     this.options = options;
 
@@ -220,17 +232,17 @@
 
   Grid.prototype.setCanvas = function () {
     var canvas = document.createElement('canvas'),
-        _OPT = this.options;
+        OPT = this.options;
 
     canvas.id = 'GRID_' + (+new Date());
-    canvas.width = _OPT.w;
-    canvas.height = _OPT.h;
+    canvas.width = OPT.w;
+    canvas.height = OPT.h;
     canvas.style.position = 'absolute';
     canvas.style.top = 0;
     canvas.style.left = 0;
     canvas.style.zIndex = 10000;
 
-    _OPT.root.appendChild(canvas);
+    OPT.root.appendChild(canvas);
 
     this.options.context = canvas.getContext('2d');
     canvas = null;
@@ -247,8 +259,8 @@
   };
 
   Grid.prototype.clear = function () {
-    var _OPT = this.options;
-    _OPT.context.clearRect(0, 0, _OPT.w, _OPT.h);
+    var OPT = this.options;
+    OPT.context.clearRect(0, 0, OPT.w, OPT.h);
   };
 
   Grid.prototype.set = function (type) {
@@ -256,13 +268,13 @@
   };
 
   Grid.prototype.draw = function (options) {
-    var _OPT = this.options,
-        ctx = _OPT.context,
+    var OPT = this.options,
+        ctx = OPT.context,
         orig_strokeStyle = ctx.strokeStyle,
         orig_lineWidth = ctx.lineWidth;
     ctx.beginPath();
 
-    Grid.types[_OPT.type](ctx, this, _OPT);
+    Grid.types[OPT.type](ctx, this, OPT);
 
     ctx.save();
     ctx.strokeStyle = orig_strokeStyle;
@@ -275,7 +287,7 @@
   };
 
   Grid.addType('Empty', function (ctx, grid, options) {
-    return null
+    return null;
   });
 
   Grid.addType('lines', function (ctx, grid) {
@@ -312,12 +324,12 @@
         getStep = (function () {
           if (options.rand) {
             return function () {
-              return n = n + (s * Math.random())
-            }
+              return (n = n + (s * Math.random()));
+            };
           } else {
             return function () {
-              return n = n + s
-            }
+              return (n = n + s);
+            };
           }
         }());
 
@@ -346,14 +358,14 @@
     ctx.fill();
   });
 
-  var Tynnu = function (root, options) {
+  Tynnu = function (root, options) {
     var defaults = {
       size: 10,
       drawEdges: false
     };
 
-    this.root = root = (root && root.nodeType == 1) ? root : document.body;
-    if ( root.hasAttribute('hasTynnu') ) { throw new Error('Tynnu is already defined under this root element'); }
+    this.root = root = (root && root.nodeType === 1) ? root : document.body;
+    if (root.hasAttribute('hasTynnu')) { throw new Error('Tynnu is already defined under this root element'); }
 
     root.setAttribute('hasTynnu', true);
     this.id = 'TYNNU_' + (+new Date());
@@ -366,7 +378,7 @@
   Tynnu.prototype.setup = function () {
     var canvas = this.canvas = document.createElement('canvas'),
         root = this.root,
-        _OPT = this.options;
+        OPT = this.options;
 
     canvas.id = this.id;
     root.style.position = 'relative';
@@ -381,8 +393,8 @@
     this.ctx = canvas.getContext('2d');
     this.events = {};
 
-    this.grid = new Grid({ root: root, type: 'dotted', rand: true, size: _OPT.size });
-    this.brush = new Brush({ context: this.ctx, drawEdges: _OPT.drawEdges });
+    this.grid = new Grid({ root: root, type: 'dotted', rand: true, size: OPT.size });
+    this.brush = new Brush({ context: this.ctx, drawEdges: OPT.drawEdges });
 
     this.root.appendChild(canvas);
     canvas = null;
@@ -397,77 +409,77 @@
   Tynnu.prototype.handleDraw = (function () {
     if ("createTouch" in document) {
       return function () {
-        var _TYNNU = this;
+        var TYNNU = this;
 
         return function () {
-          var l = event.changedTouches.length, x ,y,
-              offsetLeft = _TYNNU.root.offsetLeft,
-              offsetTop = _TYNNU.root.offsetTop;
+          var l = event.changedTouches.length, x, y,
+              offsetLeft = TYNNU.root.offsetLeft,
+              offsetTop = TYNNU.root.offsetTop;
 
           while (l--) {
             x = event.changedTouches[l].clientX;
             y = event.changedTouches[l].clientY;
-            _TYNNU.draw(x - offsetLeft, y - offsetTop);
+            TYNNU.draw(x - offsetLeft, y - offsetTop);
           }
-          _TYNNU = null;
+          TYNNU = null;
           event.preventDefault();
-        }
-      }
+        };
+      };
     } else {
       return function () {
-        var _TYNNU = this, root = _TYNNU.root;
+        var TYNNU = this, root = TYNNU.root;
 
         return function (e) {
           e = e || event;
-          _TYNNU.draw(e.clientX - root.offsetLeft, e.clientY - root.offsetTop);
-          e.preventDefault()
+          TYNNU.draw(e.clientX - root.offsetLeft, e.clientY - root.offsetTop);
+          e.preventDefault();
         };
-      }
+      };
     }
   }());
 
   Tynnu.prototype.bindPaint = function () {
-    var _TYNNU = this,
-        root = _TYNNU.root;
-    _TYNNU.events['draw'] = _TYNNU.handleDraw();
+    var TYNNU = this,
+        root = TYNNU.root;
+    TYNNU.events.draw = TYNNU.handleDraw();
 
     return function (e) {
       e = e || event;
-      _TYNNU.brush.begin(e.clientX - root.offsetLeft, e.clientY - root.offsetTop);
-      _TYNNU.events['draw'](e);
-      _TYNNU.canvas.addEventListener('mousemove', _TYNNU.events['draw'], false);
-      _TYNNU.root.addEventListener('mouseout', _TYNNU.events['unbindPaint'], false);
+      TYNNU.brush.begin(e.clientX - root.offsetLeft, e.clientY - root.offsetTop);
+      TYNNU.events.draw(e);
+      TYNNU.canvas.addEventListener('mousemove', TYNNU.events.draw, false);
+      TYNNU.root.addEventListener('mouseout', TYNNU.events.unbindPaint, false);
     };
   };
 
   Tynnu.prototype.unbindPaint = function () {
-    var _TYNNU = this;
+    var TYNNU = this;
 
     return function (e) {
-      _TYNNU.brush.stop(e || event);
-      _TYNNU.canvas.removeEventListener('mousemove', _TYNNU.events['draw'], false);
-      _TYNNU.root.removeEventListener('mouseout', _TYNNU.events['unbindPaint'], false);
-    }
+      TYNNU.brush.stop(e || event);
+      TYNNU.canvas.removeEventListener('mousemove', TYNNU.events.draw, false);
+      TYNNU.root.removeEventListener('mouseout', TYNNU.events.unbindPaint, false);
+    };
   };
 
   Tynnu.prototype.bind = function () {
-    var _TYNNU = this, canvas = _TYNNU.canvas;
+    var TYNNU = this, canvas = TYNNU.canvas;
 
-    _TYNNU.events['bindPaint'] = _TYNNU.bindPaint();
-    _TYNNU.events['unbindPaint'] = _TYNNU.unbindPaint();
+    TYNNU.events.bindPaint = TYNNU.bindPaint();
+    TYNNU.events.unbindPaint = TYNNU.unbindPaint();
 
-    canvas.addEventListener('mousedown', _TYNNU.events['bindPaint'], false);
-    canvas.addEventListener('mouseup', _TYNNU.events['unbindPaint'], false);
-    _TYNNU.root.addEventListener('dragstart', _TYNNU.events['unbindPaint'], false);
+    canvas.addEventListener('mousedown', TYNNU.events.bindPaint, false);
+    canvas.addEventListener('mouseup', TYNNU.events.unbindPaint, false);
+    TYNNU.root.addEventListener('dragstart', TYNNU.events.unbindPaint, false);
   };
 
   Tynnu.prototype.unbind = function () {
-    var _TYNNU = this, canvas = _TYNNU.canvas;
+    var TYNNU = this, canvas = TYNNU.canvas;
 
-    _TYNNU.events['unbindPaint']();
-    canvas.removeEventListener('mousedown', this.events['bindPaint'], false);
-    canvas.removeEventListener('mouseup', _TYNNU.events['unbindPaint'], false);
-    _TYNNU.root.removeEventListener('dragstart', _TYNNU.events['unbindPaint'], false);
+    TYNNU.events.unbindPaint();
+    canvas.removeEventListener('mousedown', TYNNU.events.bindPaint, false);
+    canvas.removeEventListener('mouseup', TYNNU.events.unbindPaint, false);
+    TYNNU.root.removeEventListener('dragstart', TYNNU.events.unbindPaint, false);
   };
 
   Tynnu.prototype.destroy = function () {
@@ -485,7 +497,7 @@
 
     @params - options for initializing an instance of TynnuBar
   */
-  var TynnuBar = function (options) {
+  TynnuBar = function (options) {
     var defaults = {};
 
     this.options = Helper.extend(defaults, options);
@@ -512,13 +524,13 @@
   };
 
   TynnuBar.prototype.bind = function () {
-    var _TB = this,
+    var TB = this,
         brushOptions = { drawEdges: false },
-        _tynnu = _TB.options.tynnu;
+        tynnu = TB.options.tynnu;
 
-    _TB.edgeDetector.addEventListener('change', function () { brushOptions.drawEdges = this.checked; _tynnu.brush.set(brushOptions) }, false);
-    _TB.brushSelector.addEventListener('change', function () { brushOptions.brush = this.value; _tynnu.brush.set(brushOptions) }, false);
-    _TB.gridSelector.addEventListener('change', function () { _tynnu.grid.update({ type: this.value }) }, false);
+    TB.edgeDetector.addEventListener('change', function () { brushOptions.drawEdges = this.checked; tynnu.brush.set(brushOptions); }, false);
+    TB.brushSelector.addEventListener('change', function () { brushOptions.brush = this.value; tynnu.brush.set(brushOptions); }, false);
+    TB.gridSelector.addEventListener('change', function () { tynnu.grid.update({ type: this.value }); }, false);
   };
 
   TynnuBar.prototype.loadStyles = function () {
@@ -542,7 +554,7 @@
       if (Grid.types.hasOwnProperty(type)) {
         option = document.createElement('option');
         option.value = type;
-        if ( current == type ) {
+        if (current === type) {
           option.selected = 'true';
         }
         option.innerHTML = Helper.capitalize(type);
@@ -570,7 +582,7 @@
       if (Brushes.hasOwnProperty(brush)) {
         option = document.createElement('option');
         option.value = brush;
-        if ( brush == current ) {
+        if (brush === current) {
           option.selected = 'true';
         }
         option.innerHTML = Helper.capitalize(brush);
@@ -588,7 +600,7 @@
     frag = label = selector = option = null;
   };
 
-  var board = document.getElementById('board');
+  board = document.getElementById('board');
   board.style.height = (document.body.clientHeight - document.getElementById('tynnu_toolbar').offsetHeight - 30) + 'px';
 
   this.tb = new TynnuBar({ root: document.getElementById('tynnu_toolbar'), tynnu: new Tynnu(board, { drawEdges: false }) });
